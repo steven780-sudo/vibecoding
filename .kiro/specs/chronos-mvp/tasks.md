@@ -64,28 +64,28 @@
     - 确保测试覆盖率达到关键逻辑的100%
     - _需求: 1.5, 2.5, 3.7, 5.5_
 
-- [ ] 3. 实现Backend API层
-  - [ ] 3.1 创建FastAPI应用和数据模型
+- [x] 3. 实现Backend API层
+  - [x] 3.1 创建FastAPI应用和数据模型
     - 创建main.py和FastAPI应用实例
     - 定义Pydantic数据模型（请求和响应）
     - 配置CORS中间件
     - 实现统一的响应格式
     - _需求: 9.2, 9.3, 9.4_
 
-  - [ ] 3.2 实现仓库操作API端点
+  - [x] 3.2 实现仓库操作API端点
     - 实现POST /repository/init端点
     - 实现GET /repository/status端点
     - 添加路径验证和错误处理
     - _需求: 1.1, 1.2, 1.3, 2.1, 2.4_
 
-  - [ ] 3.3 实现快照操作API端点
+  - [x] 3.3 实现快照操作API端点
     - 实现POST /repository/commit端点
     - 实现GET /repository/log端点
     - 实现POST /repository/checkout端点
     - 添加请求验证和错误处理
     - _需求: 3.1, 3.3, 3.5, 4.1, 4.5, 5.1, 5.4_
 
-  - [ ] 3.4 实现分支操作API端点
+  - [x] 3.4 实现分支操作API端点
     - 实现GET /repository/branches端点
     - 实现POST /repository/branch端点
     - 实现POST /repository/switch端点
@@ -93,7 +93,7 @@
     - 添加分支名称验证
     - _需求: 6.1, 6.2, 6.5, 7.1, 7.3, 8.2, 8.3_
 
-  - [ ] 3.5 编写API端点集成测试（核心质量保障）
+  - [x] 3.5 编写API端点集成测试（核心质量保障）
     - 使用FastAPI TestClient测试所有API端点
     - 测试请求验证和错误响应
     - 测试成功和失败场景

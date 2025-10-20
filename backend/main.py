@@ -4,8 +4,13 @@ Chronos Backend - FastAPI Application Entry Point
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from api.repository import router as repository_router
 
-app = FastAPI(title="Chronos API", version="1.0.0")
+app = FastAPI(
+    title="Chronos API",
+    version="1.0.0",
+    description="本地文件时光机 - Git版本管理工具API",
+)
 
 # Configure CORS for local frontend
 app.add_middleware(
@@ -36,6 +41,10 @@ async def root():
 async def health():
     """Health check endpoint"""
     return {"status": "healthy", "service": "chronos-backend"}
+
+
+# 注册路由
+app.include_router(repository_router, prefix="/api")
 
 
 if __name__ == "__main__":
