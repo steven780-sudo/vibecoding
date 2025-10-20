@@ -1,0 +1,202 @@
+import React, { useState } from 'react'
+import { Timeline, Card, Button, Modal, Empty, Space, Tag, message } from 'antd'
+import {
+  ClockCircleOutlined,
+  UserOutlined,
+  RollbackOutlined,
+  ExclamationCircleOutlined,
+} from '@ant-design/icons'
+import type { CommitLog } from '../types/api'
+
+interface HistoryViewerProps {
+  commits: CommitLog[]
+  loading: boolean
+  repoPath: string
+  onCheckout: (repoPath: string, commitId: string) => Promise<boolean>
+  onRefresh: () => void
+}
+
+/**
+ * HistoryViewer 组件
+ * 显示提交历史时间线，支持回滚操作
+ */
+export const HistoryViewer: React.FC<HistoryViewerProps> = ({
+  commits,
+  loading,
+  repoPath,
+  onCheckout,
+  onRefresh,
+}) => {
+  const [selectedCommit, setSelectedCommit] = useState<CommitLog | null>(null)
+  const [checkoutLoading, setCheckoutLoading] = useState(false)
+
+  // 显示回滚确认对话框
+  const showCheckoutConfirm = (commit: CommitLog) => {
+    Modal.confirm({
+      title: '确认回滚',
+      icon: <ExclamationCircleOutlined />,
+      content: (
+        <div>
+          <p>您确定要回滚到以下版本吗？</p>
+          <div style={{ marginTop: 12, padding: 12, background: '#f5f5f5' }}>
+            <p>
+              <strong>提交ID:</strong> {commit.id.substring(0, 8)}
+            </p>
+            <p>
+              <strong>描述:</strong> {commit.message}
+            </p>
+            <p>
+              <strong>作者:</strong> {commit.author}
+            </p>
+            <p>
+              <strong>时间:</strong> {commit.date}
+            </p>
+          </div>
+          <p style={{ marginTop: 12, color: '#ff4d4f' }}>
+            ⚠️
+            警告：回滚操作会将工作目录恢复到该版本的状态，未提交的更改可能会丢失。
+          </p>
+        </div>
+      ),
+      okText: '确认回滚',
+      okType: 'danger',
+      cancelText: '取消',
+      onOk: () => handleCheckout(commit),
+    })
+  }
+
+  // 处理回滚操作
+  const handleCheckout = async (commit: CommitLog) => {
+    setCheckoutLoading(true)
+    setSelectedCommit(commit)
+
+    try {
+      const success = await onCheckout(repoPath, commit.id)
+
+      if (success) {
+        message.success('回滚成功')
+        onRefresh()
+      } else {
+        message.error('回滚失败')
+      }
+    } catch (error) {
+      message.error('回滚失败')
+    } finally {
+      setCheckoutLoading(false)
+      setSelectedCommit(null)
+    }
+  }
+
+  // 格式化日期
+  const formatDate = (dateStr: string) => {
+    try {
+      const date = new Date(dateStr)
+      return date.toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    } catch {
+      return dateStr
+    }
+  }
+
+  // 空状态
+  if (!loading && commits.length === 0) {
+    return (
+      <Card>
+        <Empty
+          description="暂无历史记录"
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+        />
+      </Card>
+    )
+  }
+
+  return (
+    <Card
+      title={
+        <Space>
+          <ClockCircleOutlined />
+          <span>历史记录</span>
+          <Tag color="blue">{commits.length} 个快照</Tag>
+        </Space>
+      }
+      loading={loading}
+    >
+      <Timeline>
+        {commits.map((commit, index) => (
+          <Timeline.Item
+            key={commit.id}
+            color={index === 0 ? 'green' : 'blue'}
+            dot={
+              index === 0 ? (
+                <ClockCircleOutlined style={{ fontSize: '16px' }} />
+              ) : undefined
+            }
+          >
+            <Card
+              size="small"
+              style={{ marginBottom: 8 }}
+              extra={
+                <Button
+                  type="link"
+                  icon={<RollbackOutlined />}
+                  loading={checkoutLoading && selectedCommit?.id === commit.id}
+                  onClick={() => showCheckoutConfirm(commit)}
+                  disabled={checkoutLoading}
+                >
+                  回滚到此版本
+                </Button>
+              }
+            >
+              <Space
+                direction="vertical"
+                style={{ width: '100%' }}
+                size="small"
+              >
+                {/* 提交信息 */}
+                <div>
+                  <strong>{commit.message.split('\n')[0]}</strong>
+                  {index === 0 && (
+                    <Tag color="green" style={{ marginLeft: 8 }}>
+                      最新
+                    </Tag>
+                  )}
+                </div>
+
+                {/* 详细描述（如果有） */}
+                {commit.message.includes('\n') && (
+                  <div
+                    style={{
+                      color: '#666',
+                      fontSize: '12px',
+                      whiteSpace: 'pre-wrap',
+                    }}
+                  >
+                    {commit.message.split('\n').slice(1).join('\n').trim()}
+                  </div>
+                )}
+
+                {/* 元信息 */}
+                <Space size="large" style={{ fontSize: '12px', color: '#999' }}>
+                  <span>
+                    <UserOutlined /> {commit.author}
+                  </span>
+                  <span>
+                    <ClockCircleOutlined /> {formatDate(commit.date)}
+                  </span>
+                  <span>
+                    <Tag>{commit.id.substring(0, 8)}</Tag>
+                  </span>
+                </Space>
+              </Space>
+            </Card>
+          </Timeline.Item>
+        ))}
+      </Timeline>
+    </Card>
+  )
+}

@@ -100,15 +100,15 @@
     - 验证API响应格式的一致性
     - _需求: 9.3, 9.4_
 
-- [ ] 4. 实现Frontend API客户端
-  - [ ] 4.1 创建API客户端类
+- [x] 4. 实现Frontend API客户端
+  - [x] 4.1 创建API客户端类
     - 实现ChronosApiClient类
     - 配置baseUrl为127.0.0.1:8765
     - 实现通用的HTTP请求方法
     - 实现错误处理和重试逻辑
     - _需求: 9.1, 9.5_
 
-  - [ ] 4.2 实现所有API调用方法
+  - [x] 4.2 实现所有API调用方法
     - 实现initRepository方法
     - 实现getStatus方法
     - 实现createCommit方法
@@ -117,26 +117,26 @@
     - 实现getBranches, createBranch, switchBranch, mergeBranch方法
     - _需求: 1.1, 2.1, 3.3, 4.1, 5.3, 6.3, 7.3, 8.3_
 
-  - [ ]* 4.3 编写API客户端单元测试
+  - [ ] 4.3 编写API客户端单元测试
     - 模拟HTTP响应
     - 测试所有API方法
     - 测试错误处理
     - _需求: 9.3, 9.4_
 
-- [ ] 5. 实现Frontend自定义Hooks
-  - [ ] 5.1 实现useRepository Hook
+- [x] 5. 实现Frontend自定义Hooks
+  - [x] 5.1 实现useRepository Hook
     - 管理仓库状态数据
     - 实现refreshStatus方法
     - 处理加载状态
     - _需求: 2.1, 2.4, 10.1_
 
-  - [ ] 5.2 实现useHistory Hook
+  - [x] 5.2 实现useHistory Hook
     - 管理历史记录数据
     - 实现refreshHistory方法
     - 处理加载状态
     - _需求: 4.1, 4.5, 10.4_
 
-  - [ ] 5.3 实现useBranches Hook
+  - [x] 5.3 实现useBranches Hook
     - 管理分支列表数据
     - 实现refreshBranches方法
     - 跟踪当前分支
@@ -148,8 +148,8 @@
     - 测试副作用
     - _需求: 10.1_
 
-- [ ] 6. 实现Frontend核心组件
-  - [ ] 6.1 实现SnapshotDialog组件
+- [x] 6. 实现Frontend核心组件
+  - [x] 6.1 实现SnapshotDialog组件
     - 创建对话框UI结构（使用Ant Design Modal）
     - 显示变更文件列表（使用Checkbox.Group）
     - 实现文件选择功能（全选/取消全选）
@@ -159,7 +159,7 @@
     - 集成createCommit API调用
     - _需求: 3.1, 3.2, 3.4, 3.5, 3.6_
 
-  - [ ] 6.2 实现HistoryViewer组件
+  - [x] 6.2 实现HistoryViewer组件
     - 创建历史查看器UI结构（使用Ant Design Timeline）
     - 显示快照列表（倒序时间线）
     - 实现快照详情展示（点击显示文件变更）
@@ -169,7 +169,7 @@
     - 集成getLog和checkoutCommit API调用
     - _需求: 4.1, 4.2, 4.3, 4.4, 4.6, 5.1, 5.2, 5.4_
 
-  - [ ] 6.3 实现BranchManager组件
+  - [x] 6.3 实现BranchManager组件
     - 创建分支管理器UI（使用Ant Design Select和Button）
     - 实现分支下拉选择器
     - 显示当前分支标识
@@ -180,7 +180,7 @@
     - 集成getBranches, createBranch, switchBranch, mergeBranch API调用
     - _需求: 6.1, 6.3, 6.4, 7.1, 7.2, 7.3, 7.4, 8.1, 8.2, 8.3, 8.4, 8.5_
 
-  - [ ] 6.4 实现App主组件
+  - [x] 6.4 实现App主组件
     - 创建应用主布局
     - 实现路由管理
     - 集成所有子组件
@@ -195,39 +195,39 @@
     - 测试API调用集成
     - _需求: 3.6, 4.6, 5.1, 8.4_
 
-- [ ] 7. 实现用户通知和反馈
-  - [ ] 7.1 集成Ant Design Message组件
+- [x] 7. 实现用户通知和反馈
+  - [x] 7.1 集成Ant Design Message组件
     - 实现成功通知（初始化、创建快照、回滚等）
     - 实现错误通知（操作失败）
     - 实现警告通知（回滚前警告）
     - _需求: 1.3, 3.5, 5.4_
 
-  - [ ] 7.2 实现加载状态指示器
+  - [x] 7.2 实现加载状态指示器
     - 在所有异步操作中显示加载状态
     - 使用Ant Design Spin组件
     - 在长时间操作时显示进度提示
     - _需求: 10.5_
 
-  - [ ] 7.3 实现错误处理和用户引导
+  - [x] 7.3 实现错误处理和用户引导
     - 显示友好的错误消息
     - 提供操作建议和帮助
     - 实现空状态引导
     - _需求: 1.5, 3.7, 4.6, 5.5, 6.5, 8.5_
 
-- [ ] 8. 配置和启动脚本
-  - [ ] 8.1 创建Backend启动脚本
+- [x] 8. 配置和启动脚本
+  - [x] 8.1 创建Backend启动脚本
     - 编写启动命令
     - 配置端口和主机
     - 添加开发模式热重载
     - _需求: 9.1_
 
-  - [ ] 8.2 创建Frontend开发脚本
+  - [x] 8.2 创建Frontend开发脚本
     - 配置Vite开发服务器
     - 配置代理到Backend API
     - 添加环境变量配置
     - _需求: 9.1_
 
-  - [ ] 8.3 创建代码质量检查脚本
+  - [x] 8.3 创建代码质量检查脚本
     - 配置Black和Ruff for Python
     - 配置Prettier和ESLint for TypeScript
     - 创建pre-commit hooks
