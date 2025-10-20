@@ -11,44 +11,44 @@
   - 确保所有核心依赖都能正常工作
   - _需求: 9.1, 9.2_
 
-- [ ] 2. 实现Backend核心Git封装服务
-  - [ ] 2.1 创建GitWrapper类基础结构
+- [x] 2. 实现Backend核心Git封装服务
+  - [x] 2.1 创建GitWrapper类基础结构
     - 实现`__init__`方法，接收repo_path参数
     - 实现通用的`_run_git_command`方法用于执行Git命令
     - 实现错误处理和异常类（GitError, RepositoryNotFoundError等）
     - _需求: 1.1, 1.4_
 
-  - [ ] 2.2 实现仓库初始化功能
+  - [x] 2.2 实现仓库初始化功能
     - 实现`init_repository`方法执行git init
     - 创建.chronos配置文件
     - 验证路径存在性和可访问性
     - _需求: 1.1, 1.3, 1.4_
 
-  - [ ] 2.3 实现仓库状态获取功能
+  - [x] 2.3 实现仓库状态获取功能
     - 实现`get_status`方法执行git status --porcelain
     - 实现`get_current_branch`方法获取当前分支
     - 解析状态输出并标准化文件状态（A/M/D）
     - _需求: 2.1, 2.2, 2.3_
 
-  - [ ] 2.4 实现快照创建功能
+  - [x] 2.4 实现快照创建功能
     - 实现`create_commit`方法执行git add和git commit
     - 支持选择性添加文件
     - 验证commit message非空
     - _需求: 3.2, 3.3, 3.5_
 
-  - [ ] 2.5 实现历史记录获取功能
+  - [x] 2.5 实现历史记录获取功能
     - 实现`get_log`方法执行git log
     - 使用--pretty=format自定义输出格式
     - 解析输出为结构化数据（id, message, author, date）
     - _需求: 4.1, 4.3, 4.5_
 
-  - [ ] 2.6 实现版本回滚功能
+  - [x] 2.6 实现版本回滚功能
     - 实现`checkout_commit`方法执行git checkout
     - 验证commit_id有效性
     - 处理回滚失败情况
     - _需求: 5.3, 5.4, 5.5_
 
-  - [ ] 2.7 实现分支管理功能
+  - [x] 2.7 实现分支管理功能
     - 实现`get_branches`方法获取所有分支
     - 实现`create_branch`方法创建新分支
     - 实现`switch_branch`方法切换分支
@@ -56,7 +56,7 @@
     - 检测和处理合并冲突
     - _需求: 6.1, 6.3, 6.4, 7.1, 7.3, 8.3, 8.5_
 
-  - [ ] 2.8 编写GitWrapper单元测试（核心质量保障）
+  - [x] 2.8 编写GitWrapper单元测试（核心质量保障）
     - 为每个GitWrapper方法编写单元测试（建议在实现方法后立即编写）
     - 测试所有Git命令执行和输出解析
     - 测试错误处理逻辑
