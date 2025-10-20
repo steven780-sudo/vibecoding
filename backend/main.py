@@ -4,6 +4,7 @@ Chronos Backend - FastAPI Application Entry Point
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 from api.repository import router as repository_router
 
 app = FastAPI(

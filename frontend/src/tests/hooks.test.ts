@@ -282,7 +282,9 @@ describe('useBranches Hook', () => {
 
     const { result } = renderHook(() => useBranches())
 
-    let mergeResult = { success: false }
+    let mergeResult: { success: boolean; conflicts?: string[] } = {
+      success: false,
+    }
     await act(async () => {
       mergeResult = await result.current.mergeBranch(
         '/test/repo',
@@ -306,7 +308,9 @@ describe('useBranches Hook', () => {
 
     const { result } = renderHook(() => useBranches())
 
-    let mergeResult = { success: false }
+    let mergeResult: { success: boolean; conflicts?: string[] } = {
+      success: false,
+    }
     await act(async () => {
       mergeResult = await result.current.mergeBranch(
         '/test/repo',

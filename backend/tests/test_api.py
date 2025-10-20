@@ -2,11 +2,14 @@
 API端点集成测试
 使用FastAPI TestClient测试所有API端点
 """
-import pytest
-import tempfile
+
 import shutil
+import tempfile
 from pathlib import Path
+
+import pytest
 from fastapi.testclient import TestClient
+
 from main import app
 
 client = TestClient(app)
