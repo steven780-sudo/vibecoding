@@ -1,58 +1,103 @@
-# Chronos (本地文件时光机) - 快速开始指南
+# Chronos - 本地文件时光机
 
-欢迎使用Chronos，一款为非技术人员设计的、强大的本地文件版本管理工具。
+一款为非技术用户设计的轻量级、本地优先的文件版本管理工具。
 
-Chronos能帮助您告别混乱的文件命名和手动备份，为您重要的项目文件夹带来前所未有的安全感和掌控力。
+## 快速开始
 
-## 1. 安装前置依赖：Git
+### 安装和设置
 
-Chronos的核心引擎由强大、稳定且开源的Git驱动。因此，在使用Chronos之前，您需要在您的电脑上先安装Git。这就像专业绘图软件需要强大的显卡驱动一样，是一次性的基础准备工作。
+详细的安装指南请参阅：[docs/Task1/SETUP.md](docs/Task1/SETUP.md)
 
-### 对于Mac用户
+### 运行应用
 
-我们推荐使用`Homebrew`（Mac的“应用商店”）来安装Git，这是最简单、最纯净的方式。
+#### 桌面应用（推荐）
 
-1.  **第一步：安装Homebrew** (如果您已经安装，请跳过)
-    打开您的“终端”应用程序，复制并粘贴以下命令，然后按回车。它会自动完成安装。
-    ```bash
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    ```
+```bash
+./start_tauri.sh
+```
 
-2.  **第二步：通过Homebrew安装Git**
-    在终端里，执行以下命令：
-    ```bash
-    brew install git
-    ```
+#### Web 开发模式
 
-3.  **第三步：验证安装**
-    安装完成后，在终端里执行：
-    ```bash
-    git --version
-    ```
-    如果您能看到类似`git version 2.xx.x`的版本号信息，恭喜您，Git已成功安装！
+```bash
+# 启动后端
+./backend/start.sh
 
-### 对于Windows用户
+# 启动前端（新终端）
+./frontend/start.sh
+```
 
-我们推荐直接从Git官网下载安装程序。
+## 项目文档
 
-1.  **第一步：下载安装包**
-    请访问Git的官方网站：[https://git-scm.com/downloads](https://git-scm.com/downloads)
-    网站会自动检测您的系统并推荐合适的下载版本，点击下载即可。
+所有项目文档位于 `docs/` 目录：
 
-2.  **第二步：安装Git**
-    双击打开您下载的`.exe`安装程序。在安装过程中，您会看到很多选项。对于初次使用的用户，您**无需修改任何选项，一路点击“Next”**，最后点击“Install”即可。使用所有默认设置是最简单稳妥的方式。
+- **[docs/user_given/](docs/user_given/)** - 用户提供的原始需求和规范文档
+- **[docs/MasterGuidance/](docs/MasterGuidance/)** - 项目级别的指导文档
+- **[docs/Task1/](docs/Task1/)** - 任务1：项目基础搭建相关文档
 
-3.  **第三步：验证安装**
-    安装完成后，在您的“开始”菜单中，找到并打开一个名为“Git Bash”的程序。在弹出的命令行窗口中，输入：
-    ```bash
-    git --version
-    ```
-    如果您能看到版本号信息，说明Git已成功安装！
+详细的文档导航请查看：[docs/README.md](docs/README.md)
 
-## 2. 安装并使用Chronos
+## 技术栈
 
-*（此部分将在我们开发出第一个可用版本后进行填充）*
+- **后端**: Python 3.10+ + FastAPI
+- **前端**: React 18 + TypeScript + Vite
+- **桌面**: Tauri 2
+- **UI**: Ant Design 5.x
 
----
+## 项目结构
 
-感谢您的准备！完成Git的安装后，您就可以开始享受Chronos带来的全新文件管理体验了。
+```
+chronos/
+├── backend/          # Python FastAPI 后端
+├── frontend/         # React + TypeScript 前端
+│   └── src-tauri/   # Tauri 桌面应用配置
+├── docs/            # 项目文档
+│   ├── user_given/  # 用户提供的原始文档
+│   ├── MasterGuidance/  # 主要指导文档
+│   └── Task1/       # 任务1相关文档
+└── .kiro/           # Kiro IDE 配置
+    ├── specs/       # 项目规范
+    └── steering/    # 开发指南
+```
+
+## 开发工具
+
+### 代码质量
+
+```bash
+# 后端
+cd backend
+./venv/bin/black .        # 格式化
+./venv/bin/ruff check .   # 检查
+./venv/bin/pytest         # 测试
+
+# 前端
+cd frontend
+npm run format            # 格式化
+npm run lint              # 检查
+npm run test              # 测试
+```
+
+### 环境验证
+
+```bash
+./verify_setup.sh
+```
+
+## 当前状态
+
+✅ **任务1已完成** - 项目基础搭建和 Tauri 集成
+
+- 完整的后端和前端开发环境
+- Tauri 桌面应用框架
+- 自动化进程管理
+- 完善的文档和工具
+
+详细信息请查看：[docs/Task1/TASK_1_FINAL_REPORT.md](docs/Task1/TASK_1_FINAL_REPORT.md)
+
+## 贡献指南
+
+请参阅 [docs/user_given/project_management.md](docs/user_given/project_management.md)
+
+## 许可证
+
+[待定]
