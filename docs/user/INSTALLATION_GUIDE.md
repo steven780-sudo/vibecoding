@@ -42,8 +42,8 @@ npm --version
 从GitHub克隆项目：
 
 ```bash
-git clone https://github.com/your-username/chronos.git
-cd chronos
+git clone https://github.com/steven780-sudo/vibecoding.git
+cd vibecoding
 ```
 
 ### 2. 运行自动安装脚本
@@ -219,7 +219,7 @@ npm install
 ```bash
 # 删除项目目录
 cd ..
-rm -rf chronos
+rm -rf vibecoding
 
 # 如果需要，也可以删除Git配置
 git config --global --unset user.name
@@ -232,7 +232,7 @@ git config --global --unset user.email
 
 ```bash
 # 进入项目目录
-cd chronos
+cd vibecoding
 
 # 拉取最新代码
 git pull origin main
@@ -252,6 +252,6 @@ git pull origin main
 如果遇到安装问题：
 1. 查看本文档的"常见安装问题"部分
 2. 查看[常见问题解答](./FAQ.md)
-3. 在GitHub上提交Issue: https://github.com/your-username/chronos/issues
+3. 在GitHub上提交Issue: https://github.com/steven780-sudo/vibecoding/issues
 
 祝你使用愉快！🎉

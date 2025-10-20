@@ -409,7 +409,7 @@ git push -u origin main
 
 **A**: 
 ```bash
-cd chronos
+cd vibecoding
 git pull origin main
 ./setup.sh
 ```
@@ -442,7 +442,7 @@ git pull origin main
 ```bash
 # 删除应用程序
 cd ..
-rm -rf chronos
+rm -rf vibecoding
 
 # 时光库文件夹不会被删除
 # 如需删除时光库的版本历史：
@@ -461,11 +461,11 @@ rm -rf .git
    - [使用教程](./USER_GUIDE.md)
 
 2. **在线支持**:
-   - GitHub Issues: https://github.com/your-username/chronos/issues
-   - 项目Wiki: https://github.com/your-username/chronos/wiki
+   - GitHub Issues: https://github.com/steven780-sudo/vibecoding/issues
+   - 项目Wiki: https://github.com/steven780-sudo/vibecoding/wiki
 
 3. **社区**:
-   - 加入讨论: https://github.com/your-username/chronos/discussions
+   - 加入讨论: https://github.com/steven780-sudo/vibecoding/discussions
    - 查看已解决的问题
 
 4. **联系开发者**:
