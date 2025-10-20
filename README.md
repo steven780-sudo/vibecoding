@@ -2,6 +2,12 @@
 
 Chronos是一款为非技术用户设计的轻量级、本地优先的文件版本管理工具。它为Git驱动的版本控制提供图形化界面。
 
+## 📚 用户文档
+
+- **[安装指南](./docs/user/INSTALLATION_GUIDE.md)** - 详细的安装步骤和环境配置
+- **[使用教程](./docs/user/USER_GUIDE.md)** - 完整的功能使用指南
+- **[常见问题](./docs/user/FAQ.md)** - 常见问题解答和故障排除
+
 ## 技术栈
 
 ### Backend
