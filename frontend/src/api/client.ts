@@ -16,7 +16,7 @@ class ChronosApiClient {
   private retryDelay: number
 
   constructor(
-    baseUrl: string = 'http://127.0.0.1:8765',
+    baseUrl: string = 'http://127.0.0.1:8765/api',
     maxRetries: number = 3
   ) {
     this.baseUrl = baseUrl
