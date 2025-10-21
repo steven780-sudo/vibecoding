@@ -241,12 +241,60 @@ function App() {
                         <Text strong>变更文件: </Text>
                         <Text>{repository.status.changes.length} 个</Text>
                       </div>
+                      
+                      {/* 文件列表 */}
+                      {repository.status.changes.length > 0 && (
+                        <div style={{ marginTop: '12px' }}>
+                          <Text strong style={{ marginBottom: '8px', display: 'block' }}>
+                            文件列表:
+                          </Text>
+                          <div style={{ 
+                            maxHeight: '200px', 
+                            overflowY: 'auto',
+                            border: '1px solid #f0f0f0',
+                            borderRadius: '4px',
+                            padding: '8px'
+                          }}>
+                            {repository.status.changes.map((change, index) => (
+                              <div 
+                                key={index}
+                                style={{ 
+                                  padding: '4px 0',
+                                  borderBottom: index < repository.status.changes.length - 1 ? '1px solid #f0f0f0' : 'none'
+                                }}
+                              >
+                                <Space>
+                                  <Text 
+                                    type={
+                                      change.status === 'added' ? 'success' :
+                                      change.status === 'modified' ? 'warning' :
+                                      change.status === 'deleted' ? 'danger' : 'secondary'
+                                    }
+                                    style={{ 
+                                      fontSize: '12px',
+                                      fontWeight: 'bold',
+                                      minWidth: '50px'
+                                    }}
+                                  >
+                                    {change.status === 'added' ? '新增' :
+                                     change.status === 'modified' ? '修改' :
+                                     change.status === 'deleted' ? '删除' : change.status}
+                                  </Text>
+                                  <Text style={{ fontSize: '13px' }}>{change.file}</Text>
+                                </Space>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
                       {repository.status.changes.length > 0 && (
                         <Button
                           type="primary"
                           icon={<CameraOutlined />}
                           onClick={() => setSnapshotDialogVisible(true)}
                           block
+                          style={{ marginTop: '12px' }}
                         >
                           创建快照
                         </Button>
