@@ -14,9 +14,7 @@ import {
   message,
   Drawer,
   Divider,
-  Tree,
 } from 'antd'
-import type { TreeDataNode } from 'antd'
 import {
   FolderOpenOutlined,
   CameraOutlined,
@@ -25,8 +23,6 @@ import {
   DeleteOutlined,
   FolderAddOutlined,
   QuestionCircleOutlined,
-  FolderOutlined,
-  FileOutlined,
 } from '@ant-design/icons'
 import { open } from '@tauri-apps/plugin-dialog'
 import { SnapshotDialog, HistoryViewer, BranchManager } from './components'
@@ -38,97 +34,6 @@ const { Title, Text } = Typography
 
 // LocalStorage key
 const RECENT_REPOS_KEY = 'chronos_recent_repos'
-
-/**
- * 将文件列表转换为树状结构（最多展示4级）
- */
-function buildFileTree(changes: Array<{ status: string; file: string }>): TreeDataNode[] {
-  const MAX_DEPTH = 4
-  const tree: { [key: string]: any } = {}
-
-  changes.forEach((change) => {
-    const parts = change.file.split('/')
-    let current = tree
-
-    // 限制最多4级
-    const displayParts = parts.slice(0, MAX_DEPTH)
-    const hasMore = parts.length > MAX_DEPTH
-
-    displayParts.forEach((part, index) => {
-      const isLastPart = index === displayParts.length - 1
-      
-      if (!current[part]) {
-        current[part] = {
-          isFile: isLastPart && !hasMore,
-          children: {},
-          status: isLastPart ? change.status : undefined,
-          fullPath: parts.slice(0, index + 1).join('/'),
-        }
-      } else if (isLastPart && !hasMore) {
-        // 如果节点已存在，更新为文件状态
-        current[part].isFile = true
-        current[part].status = change.status
-      }
-      
-      // 如果是最后一级但还有更多层级，添加省略提示
-      if (isLastPart && hasMore) {
-        const remainingPath = parts.slice(MAX_DEPTH).join('/')
-        const ellipsisKey = `.../${remainingPath}`
-        current[part].children[ellipsisKey] = {
-          isFile: true,
-          children: {},
-          status: change.status,
-          fullPath: change.file,
-        }
-      }
-      current = current[part].children
-    })
-  })
-
-  function convertToTreeData(obj: any, depth: number = 0): TreeDataNode[] {
-    return Object.keys(obj).map((key) => {
-      const node = obj[key]
-      const isFile = node.isFile
-
-      // 状态标签
-      const statusText = node.status === 'added' ? '新增' :
-        node.status === 'modified' ? '修改' :
-          node.status === 'deleted' ? '删除' : ''
-
-      const statusColor = node.status === 'added' ? '#52c41a' :
-        node.status === 'modified' ? '#faad14' :
-          node.status === 'deleted' ? '#ff4d4f' : '#999'
-
-      const hasChildren = Object.keys(node.children).length > 0
-
-      return {
-        title: (
-          <Space size={4}>
-            <span style={{ fontSize: '13px' }}>{key}</span>
-            {isFile && statusText && (
-              <span style={{
-                fontSize: '11px',
-                color: statusColor,
-                fontWeight: 'bold',
-                marginLeft: '4px'
-              }}>
-                [{statusText}]
-              </span>
-            )}
-          </Space>
-        ),
-        key: node.fullPath || key,
-        icon: isFile ? <FileOutlined style={{ fontSize: '12px' }} /> : <FolderOutlined style={{ fontSize: '12px' }} />,
-        children: hasChildren && depth < MAX_DEPTH - 1
-          ? convertToTreeData(node.children, depth + 1)
-          : undefined,
-        isLeaf: isFile || !hasChildren,
-      }
-    })
-  }
-
-  return convertToTreeData(tree)
-}
 
 /**
  * 将HTTP错误转换为用户友好的错误消息
@@ -608,30 +513,53 @@ function App() {
                         <Text>{repository.status.changes.length} 个</Text>
                       </div>
 
-                      {/* 待提交的变更列表 - 树状结构 */}
+                      {/* 待提交的变更列表 */}
                       {repository.status.changes.length > 0 && (
                         <div style={{ marginTop: '12px' }}>
-                          <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <Text strong>待提交的变更:</Text>
-                            <Text type="secondary" style={{ fontSize: '11px' }}>
-                              (最多展示4级目录)
-                            </Text>
-                          </div>
+                          <Text strong style={{ marginBottom: '8px', display: 'block' }}>
+                            待提交的变更:
+                          </Text>
                           <div style={{
-                            maxHeight: '250px',
+                            maxHeight: '200px',
                             overflowY: 'auto',
                             border: '1px solid #f0f0f0',
                             borderRadius: '4px',
                             padding: '8px',
-                            backgroundColor: '#fafafa'
+                            backgroundColor: '#fafafa',
+                            fontFamily: 'Monaco, Consolas, monospace'
                           }}>
-                            <Tree
-                              showIcon
-                              showLine
-                              defaultExpandAll
-                              treeData={buildFileTree(repository.status.changes)}
-                              style={{ background: 'transparent' }}
-                            />
+                            {repository.status?.changes.map((change, index) => {
+                              const statusIcon = change.status === 'added' ? '🟢' :
+                                change.status === 'modified' ? '🟡' :
+                                  change.status === 'deleted' ? '🔴' : '⚪'
+                              const statusText = change.status === 'added' ? '新增' :
+                                change.status === 'modified' ? '修改' :
+                                  change.status === 'deleted' ? '删除' : change.status
+                              
+                              return (
+                                <div
+                                  key={index}
+                                  style={{
+                                    padding: '4px 0',
+                                    fontSize: '12px',
+                                    lineHeight: '1.6',
+                                    borderBottom: index < (repository.status?.changes.length || 0) - 1 ? '1px solid #f0f0f0' : 'none'
+                                  }}
+                                >
+                                  <Space size={8}>
+                                    <span>{statusIcon}</span>
+                                    <span style={{ 
+                                      color: '#666',
+                                      minWidth: '32px',
+                                      display: 'inline-block'
+                                    }}>
+                                      {statusText}
+                                    </span>
+                                    <span style={{ color: '#333' }}>{change.file}</span>
+                                  </Space>
+                                </div>
+                              )
+                            })}
                           </div>
                         </div>
                       )}
