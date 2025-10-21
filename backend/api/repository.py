@@ -130,7 +130,7 @@ async def get_log(path: str, limit: int = None, branch: str = None):
         return ApiResponse(
             success=True,
             message=f"获取到{len(commits_data)}条提交记录",
-            data={"commits": commits_data, "count": len(commits_data)},
+            data={"logs": commits_data},
         )
     except RepositoryNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
