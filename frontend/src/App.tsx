@@ -11,14 +11,24 @@ import {
   Input,
   Modal,
   List,
+  message,
+  Drawer,
+  Divider,
+  Tree,
 } from 'antd'
+import type { TreeDataNode } from 'antd'
 import {
   FolderOpenOutlined,
   CameraOutlined,
   ReloadOutlined,
   ClockCircleOutlined,
   DeleteOutlined,
+  FolderAddOutlined,
+  QuestionCircleOutlined,
+  FolderOutlined,
+  FileOutlined,
 } from '@ant-design/icons'
+import { open } from '@tauri-apps/plugin-dialog'
 import { SnapshotDialog, HistoryViewer, BranchManager } from './components'
 import { useRepository, useHistory, useBranches } from './hooks'
 import { apiClient } from './api'
@@ -28,6 +38,71 @@ const { Title, Text } = Typography
 
 // LocalStorage key
 const RECENT_REPOS_KEY = 'chronos_recent_repos'
+
+/**
+ * 将文件列表转换为树状结构
+ */
+function buildFileTree(changes: Array<{ status: string; file: string }>): TreeDataNode[] {
+  const tree: { [key: string]: any } = {}
+
+  changes.forEach((change) => {
+    const parts = change.file.split('/')
+    let current = tree
+
+    parts.forEach((part, index) => {
+      if (!current[part]) {
+        current[part] = {
+          isFile: index === parts.length - 1,
+          children: {},
+          status: change.status,
+        }
+      }
+      current = current[part].children
+    })
+  })
+
+  function convertToTreeData(obj: any, path: string = ''): TreeDataNode[] {
+    return Object.keys(obj).map((key) => {
+      const node = obj[key]
+      const fullPath = path ? `${path}/${key}` : key
+      const isFile = node.isFile
+
+      // 状态标签
+      const statusText = node.status === 'added' ? '新增' :
+        node.status === 'modified' ? '修改' :
+          node.status === 'deleted' ? '删除' : ''
+
+      const statusColor = node.status === 'added' ? '#52c41a' :
+        node.status === 'modified' ? '#faad14' :
+          node.status === 'deleted' ? '#ff4d4f' : '#999'
+
+      return {
+        title: (
+          <Space size={4}>
+            <span>{key}</span>
+            {isFile && statusText && (
+              <span style={{
+                fontSize: '11px',
+                color: statusColor,
+                fontWeight: 'bold',
+                marginLeft: '4px'
+              }}>
+                [{statusText}]
+              </span>
+            )}
+          </Space>
+        ),
+        key: fullPath,
+        icon: isFile ? <FileOutlined /> : <FolderOutlined />,
+        children: Object.keys(node.children).length > 0
+          ? convertToTreeData(node.children, fullPath)
+          : undefined,
+      }
+    })
+  }
+
+  return convertToTreeData(tree)
+}
 
 /**
  * 将HTTP错误转换为用户友好的错误消息
@@ -145,9 +220,24 @@ function App() {
   // 快照对话框状态
   const [snapshotDialogVisible, setSnapshotDialogVisible] = useState(false)
 
+  // 使用说明抽屉状态
+  const [helpDrawerVisible, setHelpDrawerVisible] = useState(false)
+
   // 加载最近使用的仓库
   useEffect(() => {
     setRecentRepos(getRecentRepos())
+    
+    // 检查 Tauri 环境
+    console.log('=== Tauri 环境检查 ===')
+    console.log('window.__TAURI__:', typeof (window as any).__TAURI__)
+    console.log('@tauri-apps/plugin-dialog 导入:', typeof open)
+    
+    // 检查是否在 Tauri 环境中运行
+    if (typeof (window as any).__TAURI__ === 'undefined') {
+      console.warn('警告: 不在 Tauri 环境中运行，某些功能可能不可用')
+    } else {
+      console.log('✅ Tauri 环境正常')
+    }
   }, [])
 
   // 使用自定义Hooks
@@ -158,6 +248,56 @@ function App() {
   // 全局加载状态
   const globalLoading =
     repository.loading || history.loading || branches.loading
+
+  // 打开文件夹选择对话框
+  const handleSelectFolder = async () => {
+    console.log('=== 开始打开文件夹选择对话框 ===')
+    console.log('Tauri API 是否可用:', typeof open === 'function')
+    
+    try {
+      console.log('调用 open() 函数...')
+      const selected = await open({
+        directory: true,
+        multiple: false,
+        title: '选择要打开的文件夹',
+      })
+
+      console.log('选择结果:', selected)
+      console.log('选择结果类型:', typeof selected)
+
+      if (selected && typeof selected === 'string') {
+        console.log('设置路径:', selected)
+        setPathInput(selected)
+        message.success('文件夹选择成功')
+      } else if (selected === null) {
+        console.log('用户取消了选择')
+        message.info('已取消选择')
+      } else {
+        console.log('未知的返回值:', selected)
+      }
+    } catch (error) {
+      console.error('=== 选择文件夹失败 ===')
+      console.error('错误对象:', error)
+      console.error('错误类型:', typeof error)
+      console.error('错误消息:', error instanceof Error ? error.message : String(error))
+      console.error('错误堆栈:', error instanceof Error ? error.stack : 'N/A')
+      
+      Modal.error({
+        title: '文件选择失败',
+        content: (
+          <div>
+            <p>无法打开文件选择对话框</p>
+            <p style={{ fontSize: '12px', color: '#999', marginTop: '8px' }}>
+              错误详情: {error instanceof Error ? error.message : String(error)}
+            </p>
+            <p style={{ fontSize: '12px', color: '#999' }}>
+              请检查浏览器控制台查看详细日志
+            </p>
+          </div>
+        ),
+      })
+    }
+  }
 
   // 初始化仓库
   const handleInitRepository = async () => {
@@ -299,6 +439,12 @@ function App() {
             {repoInitialized && (
               <>
                 <Button
+                  icon={<QuestionCircleOutlined />}
+                  onClick={() => setHelpDrawerVisible(true)}
+                >
+                  使用说明
+                </Button>
+                <Button
                   icon={<ReloadOutlined />}
                   onClick={refreshAll}
                   loading={globalLoading}
@@ -436,49 +582,26 @@ function App() {
                         <Text>{repository.status.changes.length} 个</Text>
                       </div>
 
-                      {/* 待提交的变更列表 */}
+                      {/* 待提交的变更列表 - 树状结构 */}
                       {repository.status.changes.length > 0 && (
                         <div style={{ marginTop: '12px' }}>
                           <Text strong style={{ marginBottom: '8px', display: 'block' }}>
                             待提交的变更:
                           </Text>
                           <div style={{
-                            maxHeight: '150px',
+                            maxHeight: '200px',
                             overflowY: 'auto',
                             border: '1px solid #f0f0f0',
                             borderRadius: '4px',
                             padding: '8px',
                             backgroundColor: '#fafafa'
                           }}>
-                            {repository.status.changes.map((change, index) => (
-                              <div
-                                key={index}
-                                style={{
-                                  padding: '4px 0',
-                                  borderBottom: index < (repository.status?.changes.length || 0) - 1 ? '1px solid #f0f0f0' : 'none'
-                                }}
-                              >
-                                <Space>
-                                  <Text
-                                    type={
-                                      change.status === 'added' ? 'success' :
-                                        change.status === 'modified' ? 'warning' :
-                                          change.status === 'deleted' ? 'danger' : 'secondary'
-                                    }
-                                    style={{
-                                      fontSize: '12px',
-                                      fontWeight: 'bold',
-                                      minWidth: '50px'
-                                    }}
-                                  >
-                                    {change.status === 'added' ? '新增' :
-                                      change.status === 'modified' ? '修改' :
-                                        change.status === 'deleted' ? '删除' : change.status}
-                                  </Text>
-                                  <Text style={{ fontSize: '13px' }}>{change.file}</Text>
-                                </Space>
-                              </div>
-                            ))}
+                            <Tree
+                              showIcon
+                              defaultExpandAll
+                              treeData={buildFileTree(repository.status.changes)}
+                              style={{ background: 'transparent' }}
+                            />
                           </div>
                         </div>
                       )}
@@ -579,19 +702,28 @@ function App() {
         cancelText="取消"
         confirmLoading={repository.loading}
       >
-        <Space direction="vertical" style={{ width: '100%' }}>
+        <Space direction="vertical" style={{ width: '100%' }} size="middle">
           <div>
             <Text strong>仓库路径</Text>
             <Text type="secondary" style={{ marginLeft: 8 }}>
               (必填)
             </Text>
           </div>
-          <Input
-            placeholder="例如: /Users/username/my-project"
-            value={pathInput}
-            onChange={(e) => setPathInput(e.target.value)}
-            onPressEnter={handleInitRepository}
-          />
+          <Space.Compact style={{ width: '100%' }}>
+            <Input
+              placeholder="例如: /Users/username/my-project"
+              value={pathInput}
+              onChange={(e) => setPathInput(e.target.value)}
+              onPressEnter={handleInitRepository}
+            />
+            <Button
+              type="primary"
+              icon={<FolderAddOutlined />}
+              onClick={handleSelectFolder}
+            >
+              选择文件夹
+            </Button>
+          </Space.Compact>
           <Alert
             message="智能识别"
             description="系统会自动检测文件夹状态：如果未初始化则自动初始化，如果已初始化则直接打开"
@@ -600,6 +732,89 @@ function App() {
           />
         </Space>
       </Modal>
+
+      {/* 使用说明抽屉 */}
+      <Drawer
+        title={
+          <Space>
+            <QuestionCircleOutlined />
+            <span>使用说明</span>
+          </Space>
+        }
+        placement="right"
+        width={450}
+        open={helpDrawerVisible}
+        onClose={() => setHelpDrawerVisible(false)}
+      >
+        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+          {/* 核心用法 */}
+          <div>
+            <Title level={4}>📝 核心用法</Title>
+            <Text>
+              1. 打开文件夹 → 2. 修改文件 → 3. 创建备份 → 4. 查看历史
+            </Text>
+          </div>
+
+          <Divider />
+
+          {/* 功能按钮说明 */}
+          <div>
+            <Title level={4}>🔘 功能按钮</Title>
+            <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+              <div>
+                <Text strong>📂 打开项目文件夹</Text>
+                <br />
+                <Text type="secondary">选择要管理的文件夹</Text>
+              </div>
+
+              <div>
+                <Text strong>💾 创建备份</Text>
+                <br />
+                <Text type="secondary">为当前文件状态创建一个备份点</Text>
+              </div>
+
+              <div>
+                <Text strong>🔄 刷新</Text>
+                <br />
+                <Text type="secondary">更新文件变更状态和历史记录</Text>
+              </div>
+
+              <div>
+                <Text strong>⏮️ 恢复</Text>
+                <br />
+                <Text type="secondary">将文件恢复到某个历史备份点</Text>
+              </div>
+
+              <div>
+                <Text strong>📋 创建副本</Text>
+                <br />
+                <Text type="secondary">创建独立的工作副本，互不影响</Text>
+              </div>
+
+              <div>
+                <Text strong>🔀 合并副本</Text>
+                <br />
+                <Text type="secondary">将副本的修改合并到主版本</Text>
+              </div>
+            </Space>
+          </div>
+
+          <Divider />
+
+          {/* 联系方式 */}
+          <Alert
+            message="需要帮助？"
+            description={
+              <Space direction="vertical">
+                <Text>联系开发者：</Text>
+                <Text strong copyable>sunshunda@gmail.com</Text>
+              </Space>
+            }
+            type="info"
+            showIcon
+          />
+        </Space>
+      </Drawer>
     </Layout>
   )
 }
