@@ -50,14 +50,19 @@ function buildTreeDisplay(changes: Array<{ status: string; file: string }>): {
     let current = tree
     
     parts.forEach((part, index) => {
+      const isLastPart = index === parts.length - 1
+      
       if (!current[part]) {
         current[part] = {
-          children: {},
-          isFile: index === parts.length - 1,
-          status: index === parts.length - 1 ? change.status : undefined,
+          isFile: isLastPart,
+          status: isLastPart ? change.status : undefined,
+          children: {}
         }
       }
-      current = current[part].children
+      
+      if (!isLastPart) {
+        current = current[part].children
+      }
     })
   })
   
