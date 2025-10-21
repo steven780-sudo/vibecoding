@@ -146,11 +146,11 @@ class ChronosApiClient {
     message: string,
     files: string[] = []
   ): Promise<ApiResponse<{ message: string }>> {
-    return this.post(
-      '/repository/commit',
-      { message, files_to_add: files },
-      { path: repoPath }
-    )
+    return this.post('/repository/commit', {
+      path: repoPath,
+      message,
+      files: files.length > 0 ? files : null,
+    })
   }
 
   /**
