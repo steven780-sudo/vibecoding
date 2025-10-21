@@ -100,10 +100,3 @@ export function useRepository(): UseRepositoryReturn {
     initRepository,
   }
 }
-
-  return {
-    ...state,
-    refreshStatus,
-    initRepository,
-  }
-}

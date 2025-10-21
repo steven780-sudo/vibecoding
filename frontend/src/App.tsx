@@ -261,7 +261,7 @@ function App() {
                                 key={index}
                                 style={{ 
                                   padding: '4px 0',
-                                  borderBottom: index < repository.status.changes.length - 1 ? '1px solid #f0f0f0' : 'none'
+                                  borderBottom: index < (repository.status?.changes.length || 0) - 1 ? '1px solid #f0f0f0' : 'none'
                                 }}
                               >
                                 <Space>
