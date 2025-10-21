@@ -631,8 +631,9 @@ class GitWrapper:
         # 获取当前分支
         current_branch = self.get_current_branch()
 
-        # 执行git status --porcelain
-        result = self._run_git_command(["status", "--porcelain"])
+        # 执行git status --porcelain -uall
+        # -uall 参数确保显示所有未追踪文件的完整路径，而不仅仅是文件夹名称
+        result = self._run_git_command(["status", "--porcelain", "-uall"])
 
         # 解析输出并过滤系统文件
         changes = []

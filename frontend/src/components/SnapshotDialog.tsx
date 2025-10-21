@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Modal, Checkbox, Input, Button, Space, message, Divider } from 'antd'
 import type { CheckboxChangeEvent } from 'antd/es/checkbox'
 import type { FileChange } from '../types/api'
+import { FileTreeView } from './FileTreeView'
 
 const { TextArea } = Input
 
@@ -65,11 +66,6 @@ export const SnapshotDialog: React.FC<SnapshotDialogProps> = ({
     }
   }
 
-  // 处理文件选择
-  const handleFileChange = (checkedValues: string[]) => {
-    setSelectedFiles(checkedValues)
-  }
-
   // 处理确认创建快照
   const handleConfirm = async () => {
     // 验证必填字段
@@ -104,34 +100,6 @@ export const SnapshotDialog: React.FC<SnapshotDialogProps> = ({
       message.error('快照创建失败')
     } finally {
       setLoading(false)
-    }
-  }
-
-  // 获取文件状态标签
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'A':
-        return '新增'
-      case 'M':
-        return '修改'
-      case 'D':
-        return '删除'
-      default:
-        return status
-    }
-  }
-
-  // 获取文件状态颜色
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'A':
-        return '#52c41a' // 绿色
-      case 'M':
-        return '#1890ff' // 蓝色
-      case 'D':
-        return '#ff4d4f' // 红色
-      default:
-        return '#666'
     }
   }
 
@@ -213,38 +181,13 @@ export const SnapshotDialog: React.FC<SnapshotDialogProps> = ({
             </Checkbox>
           </div>
 
-          {changes.length === 0 ? (
-            <div
-              style={{ textAlign: 'center', color: '#999', padding: '20px 0' }}
-            >
-              没有变更的文件
-            </div>
-          ) : (
-            <Checkbox.Group
-              style={{ width: '100%' }}
-              value={selectedFiles}
-              onChange={handleFileChange}
-            >
-              <Space direction="vertical" style={{ width: '100%' }}>
-                {changes.map((change) => (
-                  <Checkbox key={change.file} value={change.file}>
-                    <Space>
-                      <span
-                        style={{
-                          color: getStatusColor(change.status),
-                          fontWeight: 'bold',
-                          minWidth: 40,
-                        }}
-                      >
-                        [{getStatusLabel(change.status)}]
-                      </span>
-                      <span>{change.file}</span>
-                    </Space>
-                  </Checkbox>
-                ))}
-              </Space>
-            </Checkbox.Group>
-          )}
+          <FileTreeView 
+            changes={changes}
+            selectedFiles={selectedFiles}
+            onSelectionChange={setSelectedFiles}
+            showCheckbox={true}
+            defaultExpandAll={true}
+          />
         </div>
       </Space>
     </Modal>

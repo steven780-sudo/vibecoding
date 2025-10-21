@@ -8,12 +8,21 @@ use tauri::Manager;
 struct BackendProcess(Mutex<Option<Child>>);
 
 fn main() {
+    println!("=== Chronos 启动 ===");
+    println!("初始化 Tauri 插件...");
+    
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
+            println!("✅ Shell 插件已加载");
+            println!("✅ Dialog 插件已加载");
+            
             // Start the Python backend as a sidecar
             let backend_process = start_backend_server(app);
             app.manage(BackendProcess(Mutex::new(backend_process)));
+            
+            println!("=== Chronos 启动完成 ===");
             Ok(())
         })
         .on_window_event(|_window, event| {

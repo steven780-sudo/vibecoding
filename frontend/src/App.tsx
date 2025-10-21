@@ -25,7 +25,7 @@ import {
   QuestionCircleOutlined,
 } from '@ant-design/icons'
 import { open } from '@tauri-apps/plugin-dialog'
-import { SnapshotDialog, HistoryViewer, BranchManager } from './components'
+import { SnapshotDialog, HistoryViewer, BranchManager, FileTreeView } from './components'
 import { useRepository, useHistory, useBranches } from './hooks'
 import { apiClient } from './api'
 
@@ -159,12 +159,12 @@ function App() {
   // 加载最近使用的仓库
   useEffect(() => {
     setRecentRepos(getRecentRepos())
-    
+
     // 检查 Tauri 环境
     console.log('=== Tauri 环境检查 ===')
     console.log('window.__TAURI__:', typeof (window as any).__TAURI__)
     console.log('@tauri-apps/plugin-dialog 导入:', typeof open)
-    
+
     // 检查是否在 Tauri 环境中运行
     if (typeof (window as any).__TAURI__ === 'undefined') {
       console.warn('警告: 不在 Tauri 环境中运行，某些功能可能不可用')
@@ -186,7 +186,7 @@ function App() {
   const handleSelectFolder = async () => {
     console.log('=== 开始打开文件夹选择对话框 ===')
     console.log('Tauri API 是否可用:', typeof open === 'function')
-    
+
     try {
       console.log('调用 open() 函数...')
       const selected = await open({
@@ -214,7 +214,7 @@ function App() {
       console.error('错误类型:', typeof error)
       console.error('错误消息:', error instanceof Error ? error.message : String(error))
       console.error('错误堆栈:', error instanceof Error ? error.stack : 'N/A')
-      
+
       Modal.error({
         title: '文件选择失败',
         content: (
@@ -488,7 +488,7 @@ function App() {
           // 主工作区
           <Row gutter={[16, 16]}>
             {/* 左侧：状态和分支管理 */}
-            <Col xs={24} lg={8}>
+            <Col xs={24} lg={10}>
               <Space
                 direction="vertical"
                 style={{ width: '100%' }}
@@ -524,34 +524,11 @@ function App() {
                               共 {repository.status.changes.length} 个文件
                             </Text>
                           </div>
-                          <div style={{
-                            maxHeight: '250px',
-                            overflowY: 'auto',
-                            overflowX: 'auto',
-                            border: '1px solid #f0f0f0',
-                            borderRadius: '4px',
-                            padding: '8px 12px',
-                            backgroundColor: '#fafafa',
-                            fontFamily: 'Monaco, Menlo, Consolas, "Courier New", monospace',
-                            fontSize: '12px',
-                            lineHeight: '1.8',
-                            whiteSpace: 'pre'
-                          }}>
-                            {repository.status.changes.map((change, index) => {
-                              const statusIcon = change.status === 'added' ? '🟢' :
-                                change.status === 'modified' ? '🟡' :
-                                  change.status === 'deleted' ? '�' : '⚪'
-                              const statusText = change.status === 'added' ? '[新增]' :
-                                change.status === 'modified' ? '[修改]' :
-                                  change.status === 'deleted' ? '[删除]' : ''
-                              
-                              return (
-                                <div key={index} style={{ color: '#333' }}>
-                                  {statusIcon} {statusText} {change.file}
-                                </div>
-                              )
-                            })}
-                          </div>
+                          <FileTreeView 
+                            changes={repository.status.changes}
+                            showCheckbox={false}
+                            defaultExpandAll={true}
+                          />
                         </div>
                       )}
 
@@ -616,7 +593,7 @@ function App() {
             </Col>
 
             {/* 右侧：历史记录 */}
-            <Col xs={24} lg={16}>
+            <Col xs={24} lg={14}>
               <HistoryViewer
                 commits={history.commits}
                 loading={history.loading}

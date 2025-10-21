@@ -10,6 +10,12 @@ if [ ! -d "backend" ] || [ ! -d "frontend" ]; then
     exit 1
 fi
 
+# 加载 Rust 环境
+if [ -f "$HOME/.cargo/env" ]; then
+    source "$HOME/.cargo/env"
+    echo "✅ Rust 环境已加载"
+fi
+
 # 启动Backend
 echo "📦 启动 Backend 服务器..."
 cd backend
@@ -28,18 +34,18 @@ cd ..
 echo "⏳ 等待 Backend 启动..."
 sleep 3
 
-# 启动Frontend
-echo "🎨 启动 Frontend 开发服务器..."
+# 启动Tauri开发模式（会自动启动Frontend和打开应用窗口）
+echo "🎨 启动 Tauri 开发模式..."
 cd frontend
 if [ ! -d "node_modules" ]; then
     echo "❌ 错误：Frontend依赖未安装，请先运行 npm install"
     exit 1
 fi
 
-# 在前台启动Frontend（这样可以看到日志）
-npm run dev
+# 在前台启动Tauri（这样可以看到日志）
+npm run tauri:dev
 
-# 当Frontend停止时，也停止Backend
+# 当Tauri停止时，也停止Backend
 echo ""
 echo "🛑 停止 Backend 服务器..."
 kill $BACKEND_PID 2>/dev/null
