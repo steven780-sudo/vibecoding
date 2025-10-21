@@ -5,10 +5,91 @@ Git命令封装服务
 
 import json
 import os
+import re
 import subprocess
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+# .gitignore默认规则分类
+GITIGNORE_RULES = {
+    "macos": [
+        ".DS_Store",
+        ".AppleDouble",
+        ".LSOverride",
+        "._*",
+        ".DocumentRevisions-V100",
+        ".fseventsd",
+        ".Spotlight-V100",
+        ".TemporaryItems",
+        ".Trashes",
+        ".VolumeIcon.icns",
+        ".com.apple.timemachine.donotpresent",
+    ],
+    "windows": [
+        "Thumbs.db",
+        "Thumbs.db:encryptable",
+        "ehthumbs.db",
+        "ehthumbs_vista.db",
+        "*.stackdump",
+        "[Dd]esktop.ini",
+        "$RECYCLE.BIN/",
+        "*.lnk",
+    ],
+    "linux": [
+        "*~",
+        ".fuse_hidden*",
+        ".directory",
+        ".Trash-*",
+        ".nfs*",
+    ],
+    "ide": [
+        ".vscode/",
+        ".idea/",
+        "*.swp",
+        "*.swo",
+        "*.swn",
+        ".project",
+        ".classpath",
+        ".settings/",
+    ],
+}
+
+# 系统文件检测模式（正则表达式）
+SYSTEM_FILE_PATTERNS = [
+    r"^\.DS_Store$",
+    r"^\.AppleDouble$",
+    r"^\.LSOverride$",
+    r"^\._.*",
+    r"^\.DocumentRevisions-V100$",
+    r"^\.fseventsd$",
+    r"^\.Spotlight-V100$",
+    r"^\.TemporaryItems$",
+    r"^\.Trashes$",
+    r"^\.VolumeIcon\.icns$",
+    r"^\.com\.apple\.timemachine\.donotpresent$",
+    r"^Thumbs\.db$",
+    r"^Thumbs\.db:encryptable$",
+    r"^ehthumbs\.db$",
+    r"^ehthumbs_vista\.db$",
+    r".*\.stackdump$",
+    r"^[Dd]esktop\.ini$",
+    r"^\$RECYCLE\.BIN/",
+    r".*\.lnk$",
+    r".*~$",
+    r"^\.fuse_hidden.*",
+    r"^\.directory$",
+    r"^\.Trash-.*",
+    r"^\.nfs.*",
+    r"^\.vscode/",
+    r"^\.idea/",
+    r".*\.swp$",
+    r".*\.swo$",
+    r".*\.swn$",
+    r"^\.project$",
+    r"^\.classpath$",
+    r"^\.settings/",
+]
 
 
 # 自定义异常类
@@ -111,10 +192,10 @@ class GitWrapper:
         """
         # 验证路径存在性和可访问性
         if not self.repo_path.exists():
-            raise InvalidPathError(f"路径不存在: {self.repo_path}")
+            raise InvalidPathError("当前文件目录不存在！")
 
         if not os.access(self.repo_path, os.R_OK | os.W_OK):
-            raise InvalidPathError(f"路径不可访问或无读写权限: {self.repo_path}")
+            raise InvalidPathError("当前文件目录不可访问或无读写权限！")
 
         # 检查是否已经是Git仓库
         git_dir = self.repo_path / ".git"
@@ -132,7 +213,7 @@ class GitWrapper:
         except GitError:
             # 如果Git版本太旧不支持-b参数，使用传统方式并在后续重命名分支
             self._run_git_command(["init"])
-        
+
         # 配置Git以支持中文文件名
         # core.quotepath=false 可以让Git正确显示中文文件名，而不是转义为八进制编码
         self._run_git_command(["config", "core.quotepath", "false"])
@@ -145,12 +226,43 @@ class GitWrapper:
                 "name": self._get_git_config("user.name") or "Chronos用户",
                 "email": self._get_git_config("user.email") or "user@chronos.local",
             },
-            "settings": {"auto_stage": True, "default_branch": "main"},
+            "settings": {
+                "auto_stage": True,
+                "default_branch": "main",
+                "gitignore": {
+                    "auto_create": True,
+                    "smart_merge": False,
+                    "enabled_categories": ["macos", "windows", "linux", "ide"],
+                    "custom_rules": [],
+                },
+            },
         }
 
         chronos_file = self.repo_path / ".chronos"
         with open(chronos_file, "w", encoding="utf-8") as f:
             json.dump(chronos_config, f, ensure_ascii=False, indent=2)
+
+        # 创建或更新.gitignore文件
+        gitignore_result = {"created": False, "updated": False, "rules_added": []}
+        try:
+            auto_create = chronos_config["settings"]["gitignore"]["auto_create"]
+            smart_merge = chronos_config["settings"]["gitignore"]["smart_merge"]
+
+            if auto_create:
+                gitignore_result = self._create_or_update_gitignore(
+                    smart_merge=smart_merge
+                )
+        except Exception as e:
+            # .gitignore创建失败不影响初始化
+            gitignore_result["error"] = str(e)
+
+        # 清理已追踪的系统文件
+        cleaned_files = []
+        try:
+            cleaned_files = self._cleanup_tracked_system_files()
+        except Exception:
+            # 清理失败不影响初始化
+            pass
 
         # 自动创建初始提交
         # 这样用户初始化后就能立即看到文件和历史记录，并且分支名为main
@@ -171,9 +283,14 @@ class GitWrapper:
             else:
                 # 没有文件，创建空的初始提交以建立main分支
                 self._run_git_command(
-                    ["commit", "--allow-empty", "-m", "Initial commit by Chronos\n\n时光库初始化完成"]
+                    [
+                        "commit",
+                        "--allow-empty",
+                        "-m",
+                        "Initial commit by Chronos\n\n时光库初始化完成",
+                    ]
                 )
-            
+
             # 确保分支名为main（兼容旧版Git）
             try:
                 current_branch = self._run_git_command(
@@ -193,6 +310,8 @@ class GitWrapper:
             "success": True,
             "message": "时光库初始化成功",
             "already_initialized": False,
+            "gitignore": gitignore_result,
+            "cleaned_files": cleaned_files,
         }
 
     def _get_git_config(self, key: str) -> Optional[str]:
@@ -213,6 +332,289 @@ class GitWrapper:
         except Exception:
             return None
 
+    def _get_default_gitignore_rules(self) -> List[str]:
+        """
+        获取默认的.gitignore规则列表
+
+        从.chronos配置文件中读取enabled_categories和custom_rules，
+        根据配置返回对应类别的规则列表
+
+        Returns:
+            规则字符串列表
+        """
+        rules = []
+
+        # 读取.chronos配置文件
+        chronos_file = self.repo_path / ".chronos"
+        enabled_categories = ["macos", "windows", "linux", "ide"]  # 默认启用所有类别
+        custom_rules = []
+
+        if chronos_file.exists():
+            try:
+                with open(chronos_file, "r", encoding="utf-8") as f:
+                    config = json.load(f)
+
+                # 读取gitignore配置
+                gitignore_config = config.get("settings", {}).get("gitignore", {})
+                enabled_categories = gitignore_config.get(
+                    "enabled_categories", enabled_categories
+                )
+                custom_rules = gitignore_config.get("custom_rules", [])
+            except Exception:
+                # 如果读取失败，使用默认配置
+                pass
+
+        # 根据启用的类别添加规则
+        for category in enabled_categories:
+            if category in GITIGNORE_RULES:
+                rules.extend(GITIGNORE_RULES[category])
+
+        # 添加自定义规则
+        rules.extend(custom_rules)
+
+        return rules
+
+    @staticmethod
+    def _is_system_file(filename: str) -> bool:
+        """
+        判断文件是否为系统文件
+
+        使用SYSTEM_FILE_PATTERNS进行正则匹配，支持文件名和路径匹配
+
+        Args:
+            filename: 文件路径
+
+        Returns:
+            True如果是系统文件，否则False
+        """
+        if not filename:
+            return False
+
+        # 标准化路径分隔符（统一使用/）
+        filename = filename.replace("\\", "/")
+
+        # 检查是否匹配任何系统文件模式
+        for pattern in SYSTEM_FILE_PATTERNS:
+            if re.match(pattern, filename):
+                return True
+
+            # 同时检查文件名部分（处理路径中的文件）
+            basename = filename.split("/")[-1]
+            if basename and re.match(pattern, basename):
+                return True
+
+        return False
+
+    def _merge_gitignore_rules(
+        self, existing_content: str, new_rules: List[str]
+    ) -> str:
+        """
+        智能合并.gitignore规则
+
+        解析现有规则，识别缺失的推荐规则，在文件末尾追加缺失规则
+
+        Args:
+            existing_content: 现有.gitignore文件内容
+            new_rules: 新规则列表
+
+        Returns:
+            合并后的完整文件内容
+        """
+        # 解析现有规则（忽略注释和空行）
+        existing_rules = set()
+        for line in existing_content.splitlines():
+            line = line.strip()
+            if line and not line.startswith("#"):
+                existing_rules.add(line)
+
+        # 识别缺失的推荐规则
+        missing_rules = [rule for rule in new_rules if rule not in existing_rules]
+
+        if missing_rules:
+            # 在文件末尾追加缺失规则
+            merged_content = existing_content.rstrip() + "\n\n"
+            merged_content += "# Added by Chronos\n"
+            merged_content += "\n".join(missing_rules) + "\n"
+            return merged_content
+
+        return existing_content
+
+    def _generate_gitignore_template(self, rules: List[str]) -> str:
+        """
+        生成.gitignore文件模板内容
+
+        Args:
+            rules: 规则列表
+
+        Returns:
+            格式化的完整文件内容
+        """
+        # 文件头注释
+        content = "# Chronos时光库 - 自动生成的忽略规则\n"
+        content += f"# 生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+
+        # 按类别分组规则
+        categories = {
+            "macos": "macOS系统文件",
+            "windows": "Windows系统文件",
+            "linux": "Linux系统文件",
+            "ide": "IDE配置文件",
+        }
+
+        for category, description in categories.items():
+            category_rules = [
+                rule for rule in rules if rule in GITIGNORE_RULES.get(category, [])
+            ]
+            if category_rules:
+                content += f"# {description}\n"
+                content += "\n".join(category_rules) + "\n\n"
+
+        # 添加自定义规则（不在预定义类别中的规则）
+        all_predefined_rules = []
+        for cat_rules in GITIGNORE_RULES.values():
+            all_predefined_rules.extend(cat_rules)
+
+        custom_rules = [rule for rule in rules if rule not in all_predefined_rules]
+        if custom_rules:
+            content += "# 自定义规则\n"
+            content += "\n".join(custom_rules) + "\n"
+
+        return content
+
+    def _create_or_update_gitignore(self, smart_merge: bool = False) -> Dict[str, Any]:
+        """
+        创建或更新.gitignore文件
+
+        Args:
+            smart_merge: 是否启用智能合并模式
+
+        Returns:
+            操作结果字典，包含：
+            - created: bool - 是否创建了新文件
+            - updated: bool - 是否更新了现有文件
+            - rules_added: List[str] - 添加的规则列表
+        """
+        gitignore_path = self.repo_path / ".gitignore"
+        rules = self._get_default_gitignore_rules()
+
+        # 检查.gitignore是否存在
+        if gitignore_path.exists():
+            if not smart_merge:
+                # 保留现有文件，不修改
+                return {
+                    "created": False,
+                    "updated": False,
+                    "rules_added": [],
+                    "message": "保留现有.gitignore文件",
+                }
+            else:
+                # 智能合并模式
+                try:
+                    with open(gitignore_path, "r", encoding="utf-8") as f:
+                        existing_content = f.read()
+
+                    # 合并规则
+                    merged_content = self._merge_gitignore_rules(
+                        existing_content, rules
+                    )
+
+                    # 检查是否有变化
+                    if merged_content != existing_content:
+                        with open(gitignore_path, "w", encoding="utf-8") as f:
+                            f.write(merged_content)
+
+                        # 计算添加的规则
+                        existing_rules = set()
+                        for line in existing_content.splitlines():
+                            line = line.strip()
+                            if line and not line.startswith("#"):
+                                existing_rules.add(line)
+
+                        added_rules = [
+                            rule for rule in rules if rule not in existing_rules
+                        ]
+
+                        return {
+                            "created": False,
+                            "updated": True,
+                            "rules_added": added_rules,
+                            "message": f"已添加{len(added_rules)}条缺失规则",
+                        }
+                    else:
+                        return {
+                            "created": False,
+                            "updated": False,
+                            "rules_added": [],
+                            "message": "现有.gitignore已包含所有推荐规则",
+                        }
+                except Exception as e:
+                    # 读取或写入失败
+                    return {
+                        "created": False,
+                        "updated": False,
+                        "rules_added": [],
+                        "error": str(e),
+                        "message": f"更新.gitignore失败: {str(e)}",
+                    }
+        else:
+            # 创建新文件
+            try:
+                content = self._generate_gitignore_template(rules)
+                with open(gitignore_path, "w", encoding="utf-8") as f:
+                    f.write(content)
+
+                return {
+                    "created": True,
+                    "updated": False,
+                    "rules_added": rules,
+                    "message": f"已创建.gitignore文件，包含{len(rules)}条规则",
+                }
+            except Exception as e:
+                return {
+                    "created": False,
+                    "updated": False,
+                    "rules_added": [],
+                    "error": str(e),
+                    "message": f"创建.gitignore失败: {str(e)}",
+                }
+
+    def _cleanup_tracked_system_files(self) -> List[str]:
+        """
+        清理已被追踪的系统文件
+
+        使用git rm --cached命令移除系统文件的追踪状态，
+        但保留文件在工作目录中
+
+        Returns:
+            被清理的文件路径列表
+        """
+        cleaned_files = []
+
+        try:
+            # 获取所有已追踪文件
+            tracked_files = self.get_tracked_files()
+
+            # 筛选系统文件
+            system_files = [f for f in tracked_files if self._is_system_file(f)]
+
+            if not system_files:
+                return []
+
+            # 对每个系统文件执行git rm --cached
+            for file in system_files:
+                try:
+                    self._run_git_command(["rm", "--cached", file])
+                    cleaned_files.append(file)
+                except GitError:
+                    # 单个文件失败不影响其他文件
+                    continue
+
+        except Exception:
+            # 如果获取文件列表失败，返回已清理的文件
+            pass
+
+        return cleaned_files
+
     def get_status(self) -> Dict[str, Any]:
         """
         获取仓库状态
@@ -232,8 +634,10 @@ class GitWrapper:
         # 执行git status --porcelain
         result = self._run_git_command(["status", "--porcelain"])
 
-        # 解析输出
+        # 解析输出并过滤系统文件
         changes = []
+        git_management_files = {".gitignore", ".chronos", ".gitattributes"}
+
         # 注意：不要对整个输出使用strip()，因为会去掉第一行开头的空格
         # Git status --porcelain的格式是固定的，每行都是"XY filename"
         for line in result.stdout.splitlines():
@@ -245,9 +649,13 @@ class GitWrapper:
             # 前两个字符是状态码，第三个字符是空格，从第四个字符开始是文件名
             if len(line) < 4:
                 continue
-                
+
             status_code = line[:2]
             filename = line[3:]
+
+            # 过滤系统文件和Git管理文件
+            if self._is_system_file(filename) or filename in git_management_files:
+                continue
 
             # 标准化状态
             status = self._normalize_status(status_code)
@@ -264,8 +672,10 @@ class GitWrapper:
         """
         获取所有已追踪的文件列表
 
+        过滤掉系统文件和Git管理文件（如.gitignore、.chronos）
+
         Returns:
-            已追踪文件路径列表
+            已追踪文件路径列表（不包含系统文件）
 
         Raises:
             RepositoryNotFoundError: 不是Git仓库
@@ -276,11 +686,19 @@ class GitWrapper:
         # 执行git ls-files
         result = self._run_git_command(["ls-files"])
 
-        # 解析输出
+        # 解析输出并过滤系统文件
         files = []
+        git_management_files = {".gitignore", ".chronos", ".gitattributes"}
+
         for line in result.stdout.strip().split("\n"):
             if line:
-                files.append(line.strip())
+                filename = line.strip()
+                # 过滤系统文件和Git管理文件
+                if (
+                    not self._is_system_file(filename)
+                    and filename not in git_management_files
+                ):
+                    files.append(filename)
 
         return files
 
@@ -462,7 +880,7 @@ class GitWrapper:
         # 使用 NULL 字符分隔每条记录
         commits = []
         records = result.stdout.strip().split("\x00")
-        
+
         for record in records:
             if not record.strip():
                 continue

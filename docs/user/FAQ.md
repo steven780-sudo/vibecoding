@@ -274,7 +274,9 @@ git --version
 
 ### Q27: 如何排除某些文件？
 
-**A**: 在时光库根目录创建`.gitignore`文件：
+**A**: Chronos在初始化时会自动创建`.gitignore`文件，已经包含了常见的系统文件。
+
+如需添加自定义规则，编辑时光库根目录的`.gitignore`文件：
 ```
 # 排除临时文件
 *.tmp
@@ -282,12 +284,67 @@ git --version
 
 # 排除特定文件夹
 node_modules/
-.DS_Store
+build/
 
 # 排除大文件
 *.mp4
 *.zip
 ```
+
+### Q27.1: 为什么看不到.DS_Store等系统文件？
+
+**A**: Chronos会自动忽略系统文件，包括：
+- **macOS**: `.DS_Store`、`.AppleDouble`、`.Spotlight-V100`等
+- **Windows**: `Thumbs.db`、`desktop.ini`等
+- **Linux**: `*~`、`.directory`等
+- **IDE**: `.vscode/`、`.idea/`、`*.swp`等
+
+这些文件不会出现在文件变更列表中，也不会被保存到快照中。这是为了：
+- 避免不必要的文件污染历史记录
+- 减少快照大小
+- 提高跨平台兼容性
+
+### Q27.2: 如何自定义忽略规则？
+
+**A**: 编辑时光库根目录的`.chronos`配置文件：
+
+```json
+{
+  "settings": {
+    "gitignore": {
+      "enabled_categories": ["macos", "windows", "linux", "ide"],
+      "custom_rules": [
+        "*.log",
+        "*.tmp",
+        "node_modules/"
+      ]
+    }
+  }
+}
+```
+
+- `enabled_categories`: 启用的系统文件类别
+- `custom_rules`: 自定义忽略规则
+
+修改后重新初始化或手动更新`.gitignore`文件。
+
+### Q27.3: 已经追踪的系统文件怎么办？
+
+**A**: 如果在添加`.gitignore`之前已经追踪了系统文件：
+
+```bash
+cd 时光库文件夹
+
+# 移除.DS_Store的追踪（但保留文件）
+git rm --cached .DS_Store
+
+# 移除所有.DS_Store
+find . -name .DS_Store -print0 | xargs -0 git rm --cached
+
+# 创建快照保存更改
+```
+
+Chronos在初始化时会自动清理已追踪的系统文件。
 
 ### Q28: 创建快照很慢？
 

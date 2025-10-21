@@ -80,7 +80,20 @@ export const BranchManager: React.FC<BranchManagerProps> = ({
       if (success) {
         message.success(`分支 "${newBranchName}" 创建成功`)
         setCreateModalVisible(false)
+        const createdBranchName = newBranchName
         setNewBranchName('')
+        
+        // 自动切换到新创建的分支
+        try {
+          const switchSuccess = await onSwitchBranch(repoPath, createdBranchName)
+          if (switchSuccess) {
+            message.success(`已自动切换到分支 "${createdBranchName}"`)
+          }
+        } catch (error) {
+          // 切换失败不影响创建成功的提示
+          console.error('自动切换分支失败:', error)
+        }
+        
         onRefresh()
       } else {
         message.error('创建分支失败')

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Layout,
   Card,
@@ -10,11 +10,14 @@ import {
   Alert,
   Input,
   Modal,
+  List,
 } from 'antd'
 import {
   FolderOpenOutlined,
   CameraOutlined,
   ReloadOutlined,
+  ClockCircleOutlined,
+  DeleteOutlined,
 } from '@ant-design/icons'
 import { SnapshotDialog, HistoryViewer, BranchManager } from './components'
 import { useRepository, useHistory, useBranches } from './hooks'
@@ -22,6 +25,108 @@ import { apiClient } from './api'
 
 const { Header, Content } = Layout
 const { Title, Text } = Typography
+
+// LocalStorage key
+const RECENT_REPOS_KEY = 'chronos_recent_repos'
+
+/**
+ * 将HTTP错误转换为用户友好的错误消息
+ */
+function getErrorMessage(error: any): string {
+  // 检查是否有response对象（axios错误）
+  if (error.response?.status) {
+    switch (error.response.status) {
+      case 400:
+        return '文件目录不存在！'
+      case 403:
+        return '没有访问权限！'
+      case 404:
+        return '资源不存在！'
+      case 500:
+        return '服务器错误，请稍后重试！'
+      default:
+        return '操作失败，请重试！'
+    }
+  }
+
+  // 如果是Error对象或字符串，检查是否包含HTTP状态码
+  const message = error instanceof Error ? error.message : String(error)
+
+  // 匹配 "HTTP错误: 400" 这种格式
+  const httpErrorMatch = message.match(/HTTP错误[：:]\s*(\d+)/)
+  if (httpErrorMatch) {
+    const statusCode = parseInt(httpErrorMatch[1])
+    switch (statusCode) {
+      case 400:
+        return '文件目录不存在！'
+      case 403:
+        return '没有访问权限！'
+      case 404:
+        return '资源不存在！'
+      case 500:
+        return '服务器错误，请稍后重试！'
+      default:
+        return '操作失败，请重试！'
+    }
+  }
+
+  // 检查其他常见错误关键词
+  if (message.includes('400') || message.includes('Bad Request')) {
+    return '文件目录不存在！'
+  }
+  if (message.includes('403') || message.includes('Forbidden')) {
+    return '没有访问权限！'
+  }
+  if (message.includes('404') || message.includes('Not Found')) {
+    return '资源不存在！'
+  }
+  if (message.includes('500') || message.includes('Internal Server Error')) {
+    return '服务器错误，请稍后重试！'
+  }
+
+  return '操作失败，请重试！'
+}
+
+/**
+ * 获取最近使用的仓库列表
+ */
+function getRecentRepos(): string[] {
+  try {
+    const stored = localStorage.getItem(RECENT_REPOS_KEY)
+    return stored ? JSON.parse(stored) : []
+  } catch {
+    return []
+  }
+}
+
+/**
+ * 保存仓库到最近使用列表
+ */
+function saveRecentRepo(path: string) {
+  try {
+    const recent = getRecentRepos()
+    // 移除重复项
+    const filtered = recent.filter((p) => p !== path)
+    // 添加到开头
+    const updated = [path, ...filtered].slice(0, 10) // 最多保存10个
+    localStorage.setItem(RECENT_REPOS_KEY, JSON.stringify(updated))
+  } catch (error) {
+    console.error('保存最近仓库失败:', error)
+  }
+}
+
+/**
+ * 从最近使用列表中删除仓库
+ */
+function removeRecentRepo(path: string) {
+  try {
+    const recent = getRecentRepos()
+    const updated = recent.filter((p) => p !== path)
+    localStorage.setItem(RECENT_REPOS_KEY, JSON.stringify(updated))
+  } catch (error) {
+    console.error('删除最近仓库失败:', error)
+  }
+}
 
 /**
  * App主组件
@@ -34,8 +139,16 @@ function App() {
   const [initModalVisible, setInitModalVisible] = useState(false)
   const [pathInput, setPathInput] = useState('')
 
+  // 最近使用的仓库列表
+  const [recentRepos, setRecentRepos] = useState<string[]>([])
+
   // 快照对话框状态
   const [snapshotDialogVisible, setSnapshotDialogVisible] = useState(false)
+
+  // 加载最近使用的仓库
+  useEffect(() => {
+    setRecentRepos(getRecentRepos())
+  }, [])
 
   // 使用自定义Hooks
   const repository = useRepository()
@@ -53,26 +166,54 @@ function App() {
       return
     }
 
-    const success = await repository.initRepository(pathInput)
-    if (success) {
-      setRepoPath(pathInput)
-      setRepoInitialized(true)
-      setInitModalVisible(false)
-      refreshAll()
+    try {
+      const result = await apiClient.initRepository(pathInput)
+
+      if (result.success) {
+        // 保存到最近使用列表
+        saveRecentRepo(pathInput)
+        setRecentRepos(getRecentRepos())
+
+        // 设置仓库状态
+        setRepoPath(pathInput)
+        setRepoInitialized(true)
+        setInitModalVisible(false)
+
+        // 立即刷新数据（使用pathInput而不是repoPath）
+        repository.refreshStatus(pathInput)
+        history.refreshHistory(pathInput)
+        branches.refreshBranches(pathInput)
+      } else {
+        Modal.error({
+          title: '打开失败',
+          content: getErrorMessage(result.error || '无法打开仓库，请检查路径是否正确'),
+        })
+      }
+    } catch (error) {
+      Modal.error({
+        title: '打开失败',
+        content: getErrorMessage(error),
+      })
     }
   }
 
-  // 打开现有仓库
-  const handleOpenRepository = () => {
-    if (!pathInput.trim()) {
-      Modal.error({ title: '错误', content: '请输入仓库路径' })
-      return
-    }
-
-    setRepoPath(pathInput)
+  // 从最近列表打开仓库
+  const handleOpenRecentRepo = (path: string) => {
+    setPathInput(path)
+    setRepoPath(path)
     setRepoInitialized(true)
-    setInitModalVisible(false)
-    refreshAll()
+
+    // 立即刷新数据
+    repository.refreshStatus(path)
+    history.refreshHistory(path)
+    branches.refreshBranches(path)
+  }
+
+  // 删除最近使用的仓库
+  const handleRemoveRecentRepo = (path: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    removeRecentRepo(path)
+    setRecentRepos(getRecentRepos())
   }
 
   // 刷新所有数据
@@ -143,9 +284,9 @@ function App() {
         </Space>
 
         <Space size="large">
-          <Text 
-            type="secondary" 
-            style={{ 
+          <Text
+            type="secondary"
+            style={{
               fontSize: '12px',
               fontStyle: 'italic',
               color: '#8c8c8c'
@@ -153,7 +294,7 @@ function App() {
           >
             Copyright © sunshunda
           </Text>
-          
+
           <Space>
             {repoInitialized && (
               <>
@@ -221,6 +362,46 @@ function App() {
                 >
                   打开仓库
                 </Button>
+
+                {/* 最近使用的仓库列表 */}
+                {recentRepos.length > 0 && (
+                  <div style={{ width: '100%', marginTop: '24px' }}>
+                    <div style={{ textAlign: 'left', marginBottom: '12px' }}>
+                      <Space>
+                        <ClockCircleOutlined />
+                        <Text strong>最近使用的仓库</Text>
+                      </Space>
+                    </div>
+                    <List
+                      size="small"
+                      bordered
+                      dataSource={recentRepos}
+                      renderItem={(item) => (
+                        <List.Item
+                          style={{
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                          }}
+                          onClick={() => handleOpenRecentRepo(item)}
+                          actions={[
+                            <Button
+                              key="delete"
+                              type="text"
+                              size="small"
+                              danger
+                              icon={<DeleteOutlined />}
+                              onClick={(e) => handleRemoveRecentRepo(item, e)}
+                            />,
+                          ]}
+                        >
+                          <Text ellipsis style={{ maxWidth: '400px' }}>
+                            {item}
+                          </Text>
+                        </List.Item>
+                      )}
+                    />
+                  </div>
+                )}
               </Space>
             </Card>
           </div>
@@ -254,15 +435,15 @@ function App() {
                         <Text strong>待提交的变更: </Text>
                         <Text>{repository.status.changes.length} 个</Text>
                       </div>
-                      
+
                       {/* 待提交的变更列表 */}
                       {repository.status.changes.length > 0 && (
                         <div style={{ marginTop: '12px' }}>
                           <Text strong style={{ marginBottom: '8px', display: 'block' }}>
                             待提交的变更:
                           </Text>
-                          <div style={{ 
-                            maxHeight: '150px', 
+                          <div style={{
+                            maxHeight: '150px',
                             overflowY: 'auto',
                             border: '1px solid #f0f0f0',
                             borderRadius: '4px',
@@ -270,29 +451,29 @@ function App() {
                             backgroundColor: '#fafafa'
                           }}>
                             {repository.status.changes.map((change, index) => (
-                              <div 
+                              <div
                                 key={index}
-                                style={{ 
+                                style={{
                                   padding: '4px 0',
                                   borderBottom: index < (repository.status?.changes.length || 0) - 1 ? '1px solid #f0f0f0' : 'none'
                                 }}
                               >
                                 <Space>
-                                  <Text 
+                                  <Text
                                     type={
                                       change.status === 'added' ? 'success' :
-                                      change.status === 'modified' ? 'warning' :
-                                      change.status === 'deleted' ? 'danger' : 'secondary'
+                                        change.status === 'modified' ? 'warning' :
+                                          change.status === 'deleted' ? 'danger' : 'secondary'
                                     }
-                                    style={{ 
+                                    style={{
                                       fontSize: '12px',
                                       fontWeight: 'bold',
                                       minWidth: '50px'
                                     }}
                                   >
                                     {change.status === 'added' ? '新增' :
-                                     change.status === 'modified' ? '修改' :
-                                     change.status === 'deleted' ? '删除' : change.status}
+                                      change.status === 'modified' ? '修改' :
+                                        change.status === 'deleted' ? '删除' : change.status}
                                   </Text>
                                   <Text style={{ fontSize: '13px' }}>{change.file}</Text>
                                 </Space>
@@ -301,15 +482,15 @@ function App() {
                           </div>
                         </div>
                       )}
-                      
+
                       {/* 已追踪的文件列表 */}
                       {repository.trackedFiles.length > 0 && (
                         <div style={{ marginTop: '12px' }}>
                           <Text strong style={{ marginBottom: '8px', display: 'block' }}>
                             已追踪的文件 ({repository.trackedFiles.length}):
                           </Text>
-                          <div style={{ 
-                            maxHeight: '200px', 
+                          <div style={{
+                            maxHeight: '200px',
                             overflowY: 'auto',
                             border: '1px solid #e6f7ff',
                             borderRadius: '4px',
@@ -317,9 +498,9 @@ function App() {
                             backgroundColor: '#f0f9ff'
                           }}>
                             {repository.trackedFiles.map((file, index) => (
-                              <div 
+                              <div
                                 key={index}
-                                style={{ 
+                                style={{
                                   padding: '4px 0',
                                   borderBottom: index < repository.trackedFiles.length - 1 ? '1px solid #e6f7ff' : 'none'
                                 }}
@@ -332,7 +513,7 @@ function App() {
                           </div>
                         </div>
                       )}
-                      
+
                       {repository.status.changes.length > 0 && (
                         <Button
                           type="primary"
@@ -388,27 +569,15 @@ function App() {
         />
       )}
 
-      {/* 初始化/打开仓库对话框 */}
+      {/* 打开仓库对话框 */}
       <Modal
         title="打开仓库"
         open={initModalVisible}
         onCancel={() => setInitModalVisible(false)}
-        footer={[
-          <Button key="cancel" onClick={() => setInitModalVisible(false)}>
-            取消
-          </Button>,
-          <Button key="open" onClick={handleOpenRepository}>
-            打开现有仓库
-          </Button>,
-          <Button
-            key="init"
-            type="primary"
-            onClick={handleInitRepository}
-            loading={repository.loading}
-          >
-            初始化新仓库
-          </Button>,
-        ]}
+        onOk={handleInitRepository}
+        okText="打开"
+        cancelText="取消"
+        confirmLoading={repository.loading}
       >
         <Space direction="vertical" style={{ width: '100%' }}>
           <div>
@@ -421,16 +590,11 @@ function App() {
             placeholder="例如: /Users/username/my-project"
             value={pathInput}
             onChange={(e) => setPathInput(e.target.value)}
-            onPressEnter={handleOpenRepository}
+            onPressEnter={handleInitRepository}
           />
           <Alert
-            message="提示"
-            description={
-              <div>
-                <p>• 打开现有仓库：选择已经初始化的Git仓库路径</p>
-                <p>• 初始化新仓库：在指定路径创建新的Git仓库</p>
-              </div>
-            }
+            message="智能识别"
+            description="系统会自动检测文件夹状态：如果未初始化则自动初始化，如果已初始化则直接打开"
             type="info"
             showIcon
           />

@@ -34,7 +34,17 @@ async def init_repository(request: InitRepositoryRequest):
     """
     初始化Git仓库
 
-    创建新的Git仓库并生成.chronos配置文件
+    创建新的Git仓库并生成.chronos配置文件。
+    自动创建.gitignore文件以忽略系统文件（如.DS_Store、Thumbs.db等）。
+    清理已追踪的系统文件。
+
+    返回数据包含：
+    - already_initialized: 是否已经初始化
+    - gitignore: .gitignore操作结果
+      - created: 是否创建了新文件
+      - updated: 是否更新了现有文件
+      - rules_added: 添加的规则列表
+    - cleaned_files: 清理的系统文件列表
     """
     try:
         wrapper = GitWrapper(request.path)
@@ -43,7 +53,11 @@ async def init_repository(request: InitRepositoryRequest):
         return ApiResponse(
             success=result["success"],
             message=result["message"],
-            data={"already_initialized": result.get("already_initialized", False)},
+            data={
+                "already_initialized": result.get("already_initialized", False),
+                "gitignore": result.get("gitignore", {}),
+                "cleaned_files": result.get("cleaned_files", []),
+            },
         )
     except InvalidPathError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -113,7 +127,10 @@ async def create_commit(request: CreateCommitRequest):
     将变更保存为新的提交
     """
     try:
-        print(f"DEBUG: Received commit request - path: {request.path}, message: {request.message}, files: {request.files}")
+        print(
+            f"DEBUG: Received commit request - path: {request.path}, "
+            f"message: {request.message}, files: {request.files}"
+        )
         wrapper = GitWrapper(request.path)
         result = wrapper.create_commit(request.message, request.files)
         print(f"DEBUG: Git wrapper result: {result}")
@@ -141,6 +158,7 @@ async def create_commit(request: CreateCommitRequest):
     except Exception as e:
         print(f"DEBUG: Exception: {type(e).__name__}: {e}")
         import traceback
+
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"未知错误: {str(e)}")
 

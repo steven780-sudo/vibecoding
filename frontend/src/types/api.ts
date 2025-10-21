@@ -32,3 +32,14 @@ export interface MergeResult {
   message: string
   conflicts: string[]
 }
+
+export interface InitRepositoryData {
+  already_initialized: boolean
+  gitignore?: {
+    created: boolean
+    updated: boolean
+    rules_added: string[]
+    message: string
+  }
+  cleaned_files?: string[]
+}

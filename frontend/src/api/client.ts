@@ -4,6 +4,7 @@ import type {
   CommitLog,
   BranchesData,
   MergeResult,
+  InitRepositoryData,
 } from '../types/api'
 
 /**
@@ -123,7 +124,7 @@ class ChronosApiClient {
    */
   async initRepository(
     path: string
-  ): Promise<ApiResponse<{ message: string }>> {
+  ): Promise<ApiResponse<InitRepositoryData>> {
     return this.post('/repository/init', { path })
   }
 
