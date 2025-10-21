@@ -126,7 +126,7 @@ class ChronosApiClient {
    * 获取仓库状态
    */
   async getStatus(repoPath: string): Promise<ApiResponse<StatusData>> {
-    return this.get('/repository/status', { repo_path: repoPath })
+    return this.get('/repository/status', { path: repoPath })
   }
 
   /**
@@ -140,7 +140,7 @@ class ChronosApiClient {
     return this.post(
       '/repository/commit',
       { message, files_to_add: files },
-      { repo_path: repoPath }
+      { path: repoPath }
     )
   }
 
@@ -148,7 +148,7 @@ class ChronosApiClient {
    * 获取提交历史
    */
   async getLog(repoPath: string): Promise<ApiResponse<{ logs: CommitLog[] }>> {
-    return this.get('/repository/log', { repo_path: repoPath })
+    return this.get('/repository/log', { path: repoPath })
   }
 
   /**
@@ -161,7 +161,7 @@ class ChronosApiClient {
     return this.post(
       '/repository/checkout',
       { commit_id: commitId },
-      { repo_path: repoPath }
+      { path: repoPath }
     )
   }
 
@@ -169,7 +169,7 @@ class ChronosApiClient {
    * 获取所有分支
    */
   async getBranches(repoPath: string): Promise<ApiResponse<BranchesData>> {
-    return this.get('/repository/branches', { repo_path: repoPath })
+    return this.get('/repository/branches', { path: repoPath })
   }
 
   /**
@@ -179,7 +179,7 @@ class ChronosApiClient {
     repoPath: string,
     name: string
   ): Promise<ApiResponse<{ message: string }>> {
-    return this.post('/repository/branch', { name }, { repo_path: repoPath })
+    return this.post('/repository/branch', { name }, { path: repoPath })
   }
 
   /**
@@ -189,7 +189,7 @@ class ChronosApiClient {
     repoPath: string,
     branch: string
   ): Promise<ApiResponse<{ message: string }>> {
-    return this.post('/repository/switch', { branch }, { repo_path: repoPath })
+    return this.post('/repository/switch', { branch }, { path: repoPath })
   }
 
   /**
@@ -203,7 +203,7 @@ class ChronosApiClient {
     return this.post(
       '/repository/merge',
       { source_branch: sourceBranch, target_branch: targetBranch },
-      { repo_path: repoPath }
+      { path: repoPath }
     )
   }
 }
