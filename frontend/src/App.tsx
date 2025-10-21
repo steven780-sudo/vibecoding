@@ -35,77 +35,7 @@ const { Title, Text } = Typography
 // LocalStorage key
 const RECENT_REPOS_KEY = 'chronos_recent_repos'
 
-/**
- * 构建树状结构显示（类似 tree 命令）
- */
-function buildTreeDisplay(changes: Array<{ status: string; file: string }>): {
-  lines: Array<{ text: string; status: string; isFile: boolean }>;
-  stats: { folders: number; files: number };
-} {
-  // 构建树结构
-  const tree: any = {}
-  
-  changes.forEach((change) => {
-    const parts = change.file.split('/')
-    let current = tree
-    
-    parts.forEach((part, index) => {
-      const isLastPart = index === parts.length - 1
-      
-      if (!current[part]) {
-        current[part] = {
-          isFile: isLastPart,
-          status: isLastPart ? change.status : undefined,
-          children: {}
-        }
-      }
-      
-      if (!isLastPart) {
-        current = current[part].children
-      }
-    })
-  })
-  
-  // 转换为显示行
-  const lines: Array<{ text: string; status: string; isFile: boolean }> = []
-  const folders = new Set<string>()
-  let fileCount = 0
-  
-  function traverse(obj: any, prefix: string = '') {
-    const keys = Object.keys(obj).sort()
-    keys.forEach((key, index) => {
-      const node = obj[key]
-      const isLastItem = index === keys.length - 1
-      const connector = isLastItem ? '└── ' : '├── '
-      const extension = isLastItem ? '    ' : '│   '
-      
-      if (node.isFile) {
-        fileCount++
-        lines.push({
-          text: prefix + connector + key,
-          status: node.status || '',
-          isFile: true,
-        })
-      } else {
-        folders.add(key)
-        lines.push({
-          text: prefix + connector + key,
-          status: '',
-          isFile: false,
-        })
-        
-        // 递归处理子节点
-        if (Object.keys(node.children).length > 0) {
-          traverse(node.children, prefix + extension)
-        }
-      }
-    })
-  }
-  
-  traverse(tree)
-  
-  return { lines, stats: { folders: folders.size, files: fileCount } }
-}
+// 不需要复杂的树结构函数了
 
 /**
  * 将HTTP错误转换为用户友好的错误消息
@@ -586,51 +516,44 @@ function App() {
                       </div>
 
                       {/* 待提交的变更列表 */}
-                      {repository.status.changes.length > 0 && (() => {
-                        const { lines, stats } = buildTreeDisplay(repository.status.changes)
-                        return (
-                          <div style={{ marginTop: '12px' }}>
-                            <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <Text strong>待提交的变更:</Text>
-                              <Text type="secondary" style={{ fontSize: '11px' }}>
-                                {stats.folders} 个文件夹, {stats.files} 个文件
-                              </Text>
-                            </div>
-                            <div style={{
-                              maxHeight: '250px',
-                              overflowY: 'auto',
-                              overflowX: 'auto',
-                              border: '1px solid #f0f0f0',
-                              borderRadius: '4px',
-                              padding: '8px 12px',
-                              backgroundColor: '#fafafa',
-                              fontFamily: 'Monaco, Menlo, Consolas, "Courier New", monospace',
-                              fontSize: '12px',
-                              lineHeight: '1.6'
-                            }}>
-                              {lines.map((line, index) => {
-                                const statusIcon = line.status === 'added' ? ' 🟢' :
-                                  line.status === 'modified' ? ' 🟡' :
-                                    line.status === 'deleted' ? ' 🔴' : ''
-                                
-                                return (
-                                  <div
-                                    key={index}
-                                    style={{
-                                      color: line.isFile ? '#333' : '#1890ff',
-                                      fontWeight: line.isFile ? 'normal' : '600',
-                                      whiteSpace: 'pre',
-                                      userSelect: 'text'
-                                    }}
-                                  >
-                                    {line.text}{statusIcon}
-                                  </div>
-                                )
-                              })}
-                            </div>
+                      {repository.status.changes.length > 0 && (
+                        <div style={{ marginTop: '12px' }}>
+                          <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Text strong>待提交的变更:</Text>
+                            <Text type="secondary" style={{ fontSize: '11px' }}>
+                              共 {repository.status.changes.length} 个文件
+                            </Text>
                           </div>
-                        )
-                      })()}
+                          <div style={{
+                            maxHeight: '250px',
+                            overflowY: 'auto',
+                            overflowX: 'auto',
+                            border: '1px solid #f0f0f0',
+                            borderRadius: '4px',
+                            padding: '8px 12px',
+                            backgroundColor: '#fafafa',
+                            fontFamily: 'Monaco, Menlo, Consolas, "Courier New", monospace',
+                            fontSize: '12px',
+                            lineHeight: '1.8',
+                            whiteSpace: 'pre'
+                          }}>
+                            {repository.status.changes.map((change, index) => {
+                              const statusIcon = change.status === 'added' ? '🟢' :
+                                change.status === 'modified' ? '🟡' :
+                                  change.status === 'deleted' ? '�' : '⚪'
+                              const statusText = change.status === 'added' ? '[新增]' :
+                                change.status === 'modified' ? '[修改]' :
+                                  change.status === 'deleted' ? '[删除]' : ''
+                              
+                              return (
+                                <div key={index} style={{ color: '#333' }}>
+                                  {statusIcon} {statusText} {change.file}
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )}
 
                       {/* 已追踪的文件列表 */}
                       {repository.trackedFiles.length > 0 && (
