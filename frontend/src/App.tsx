@@ -23,9 +23,11 @@ import {
   DeleteOutlined,
   FolderAddOutlined,
   QuestionCircleOutlined,
+  FileTextOutlined,
+  HomeOutlined,
 } from '@ant-design/icons'
 import { open } from '@tauri-apps/plugin-dialog'
-import { SnapshotDialog, HistoryViewer, BranchManager, FileTreeView } from './components'
+import { SnapshotDialog, HistoryViewer, BranchManager, FileTreeView, ReleaseNotes } from './components'
 import { useRepository, useHistory, useBranches } from './hooks'
 import { apiClient } from './api'
 
@@ -156,6 +158,9 @@ function App() {
   // 使用说明抽屉状态
   const [helpDrawerVisible, setHelpDrawerVisible] = useState(false)
 
+  // 软件更新说明抽屉状态
+  const [releaseNotesVisible, setReleaseNotesVisible] = useState(false)
+
   // 加载最近使用的仓库
   useEffect(() => {
     setRecentRepos(getRecentRepos())
@@ -271,15 +276,32 @@ function App() {
   }
 
   // 从最近列表打开仓库
-  const handleOpenRecentRepo = (path: string) => {
-    setPathInput(path)
-    setRepoPath(path)
-    setRepoInitialized(true)
+  const handleOpenRecentRepo = async (path: string) => {
+    try {
+      // 先尝试获取状态，验证路径是否有效
+      const result = await apiClient.getStatus(path)
+      
+      if (result.success) {
+        setPathInput(path)
+        setRepoPath(path)
+        setRepoInitialized(true)
 
-    // 立即刷新数据
-    repository.refreshStatus(path)
-    history.refreshHistory(path)
-    branches.refreshBranches(path)
+        // 立即刷新数据
+        repository.refreshStatus(path)
+        history.refreshHistory(path)
+        branches.refreshBranches(path)
+      } else {
+        // 路径无效，显示错误并删除记录
+        message.error('该文件夹不存在或已被删除')
+        removeRecentRepo(path)
+        setRecentRepos(getRecentRepos())
+      }
+    } catch (error) {
+      // 发生错误，显示提示并删除记录
+      message.error('无法打开该文件夹，可能已被删除')
+      removeRecentRepo(path)
+      setRecentRepos(getRecentRepos())
+    }
   }
 
   // 删除最近使用的仓库
@@ -296,6 +318,21 @@ function App() {
       history.refreshHistory(repoPath)
       branches.refreshBranches(repoPath)
     }
+  }
+
+  // 返回首页
+  const handleBackToHome = () => {
+    Modal.confirm({
+      title: '返回首页',
+      content: '确定要返回首页吗？当前文件夹将被关闭。',
+      okText: '确定',
+      cancelText: '取消',
+      onOk: () => {
+        setRepoPath('')
+        setRepoInitialized(false)
+        setPathInput('')
+      },
+    })
   }
 
   // 创建快照
@@ -345,32 +382,39 @@ function App() {
           justifyContent: 'space-between',
         }}
       >
-        <Space>
-          <Title level={3} style={{ margin: 0 }}>
-            Chronos - 文件时光机
-          </Title>
-          {repoInitialized && (
-            <Text type="secondary" style={{ fontSize: '14px' }}>
-              {repoPath}
-            </Text>
-          )}
-        </Space>
+        <Title level={3} style={{ margin: 0 }}>
+          Chronos - 文件时光机
+        </Title>
 
         <Space size="large">
-          <Text
-            type="secondary"
-            style={{
-              fontSize: '12px',
-              fontStyle: 'italic',
-              color: '#8c8c8c'
-            }}
-          >
-            Copyright © sunshunda
-          </Text>
+          {!repoInitialized && (
+            <Text
+              type="secondary"
+              style={{
+                fontSize: '14px',
+                fontStyle: 'italic',
+                color: '#8c8c8c'
+              }}
+            >
+              Copyright © sunshunda
+            </Text>
+          )}
 
           <Space>
             {repoInitialized && (
               <>
+                <Button
+                  icon={<HomeOutlined />}
+                  onClick={handleBackToHome}
+                >
+                  返回首页
+                </Button>
+                <Button
+                  icon={<FileTextOutlined />}
+                  onClick={() => setReleaseNotesVisible(true)}
+                >
+                  软件更新说明
+                </Button>
                 <Button
                   icon={<QuestionCircleOutlined />}
                   onClick={() => setHelpDrawerVisible(true)}
@@ -392,18 +436,9 @@ function App() {
                     !repository.status || repository.status.changes.length === 0
                   }
                 >
-                  创建快照
+                  创建备份
                 </Button>
               </>
-            )}
-            {!repoInitialized && (
-              <Button
-                type="primary"
-                icon={<FolderOpenOutlined />}
-                onClick={() => setInitModalVisible(true)}
-              >
-                打开仓库
-              </Button>
             )}
           </Space>
         </Space>
@@ -431,7 +466,7 @@ function App() {
                 />
                 <Title level={2}>欢迎使用 Chronos</Title>
                 <Text type="secondary">
-                  开始使用前，请先打开或初始化一个仓库
+                  开始使用前，请先打开或初始化一个本地文件夹作为时光机文件夹
                 </Text>
                 <Button
                   type="primary"
@@ -439,7 +474,7 @@ function App() {
                   icon={<FolderOpenOutlined />}
                   onClick={() => setInitModalVisible(true)}
                 >
-                  打开仓库
+                  打开文件夹
                 </Button>
 
                 {/* 最近使用的仓库列表 */}
@@ -448,7 +483,7 @@ function App() {
                     <div style={{ textAlign: 'left', marginBottom: '12px' }}>
                       <Space>
                         <ClockCircleOutlined />
-                        <Text strong>最近使用的仓库</Text>
+                        <Text strong>最近使用的时光机文件夹</Text>
                       </Space>
                     </div>
                     <List
@@ -492,69 +527,70 @@ function App() {
               <Space
                 direction="vertical"
                 style={{ width: '100%' }}
-                size="middle"
+                size="small"
               >
-                {/* 仓库状态卡片 */}
+                {/* 时光机文件夹状态卡片 */}
                 <Card
                   title={
-                    <Space>
-                      <FolderOpenOutlined />
-                      <span>仓库状态</span>
-                    </Space>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                      <Space>
+                        <FolderOpenOutlined />
+                        <span>文件夹状态</span>
+                      </Space>
+                      <Text type="secondary" style={{ fontSize: '12px', fontWeight: 'normal' }}>
+                        {repoPath}
+                      </Text>
+                    </div>
                   }
                   loading={repository.loading}
                 >
                   {repository.status && (
                     <Space direction="vertical" style={{ width: '100%' }}>
                       <div>
-                        <Text strong>当前分支: </Text>
+                        <Text strong>当前副本: </Text>
                         <Text>{repository.status.branch}</Text>
                       </div>
-                      <div>
-                        <Text strong>待提交的变更: </Text>
-                        <Text>{repository.status.changes.length} 个</Text>
-                      </div>
 
-                      {/* 待提交的变更列表 */}
+                      {/* 有变动但未保存的文件列表 */}
                       {repository.status.changes.length > 0 && (
                         <div style={{ marginTop: '12px' }}>
                           <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <Text strong>待提交的变更:</Text>
-                            <Text type="secondary" style={{ fontSize: '11px' }}>
+                            <Text strong>有变动但未保存的文件:</Text>
+                            <Text strong>
                               共 {repository.status.changes.length} 个文件
                             </Text>
                           </div>
                           <FileTreeView 
                             changes={repository.status.changes}
                             showCheckbox={false}
-                            defaultExpandAll={true}
+                            defaultExpandAll={false}
                           />
                         </div>
                       )}
 
                       {/* 已追踪的文件列表 */}
                       {repository.trackedFiles.length > 0 && (
-                        <div style={{ marginTop: '12px' }}>
-                          <Text strong style={{ marginBottom: '8px', display: 'block' }}>
+                        <div style={{ marginTop: '8px' }}>
+                          <Text strong style={{ marginBottom: '4px', display: 'block', fontSize: '13px' }}>
                             已追踪的文件 ({repository.trackedFiles.length}):
                           </Text>
                           <div style={{
-                            maxHeight: '200px',
+                            maxHeight: '120px',
                             overflowY: 'auto',
                             border: '1px solid #e6f7ff',
                             borderRadius: '4px',
-                            padding: '8px',
+                            padding: '6px',
                             backgroundColor: '#f0f9ff'
                           }}>
                             {repository.trackedFiles.map((file, index) => (
                               <div
                                 key={index}
                                 style={{
-                                  padding: '4px 0',
+                                  padding: '2px 0',
                                   borderBottom: index < repository.trackedFiles.length - 1 ? '1px solid #e6f7ff' : 'none'
                                 }}
                               >
-                                <Text style={{ fontSize: '13px', color: '#1890ff' }}>
+                                <Text style={{ fontSize: '12px', color: '#1890ff' }}>
                                   📄 {file}
                                 </Text>
                               </div>
@@ -571,7 +607,7 @@ function App() {
                           block
                           style={{ marginTop: '12px' }}
                         >
-                          创建快照
+                          创建备份
                         </Button>
                       )}
                     </Space>
@@ -606,7 +642,7 @@ function App() {
         )}
       </Content>
 
-      {/* 快照创建对话框 */}
+      {/* 备份创建对话框 */}
       {repoInitialized && (
         <SnapshotDialog
           visible={snapshotDialogVisible}
@@ -618,9 +654,9 @@ function App() {
         />
       )}
 
-      {/* 打开仓库对话框 */}
+      {/* 打开时光机文件夹对话框 */}
       <Modal
-        title="打开仓库"
+        title="打开时光机文件夹"
         open={initModalVisible}
         onCancel={() => setInitModalVisible(false)}
         onOk={handleInitRepository}
@@ -630,7 +666,7 @@ function App() {
       >
         <Space direction="vertical" style={{ width: '100%' }} size="middle">
           <div>
-            <Text strong>仓库路径</Text>
+            <Text strong>文件夹路径</Text>
             <Text type="secondary" style={{ marginLeft: 8 }}>
               (必填)
             </Text>
@@ -688,7 +724,7 @@ function App() {
             <Title level={5} style={{ marginBottom: '8px' }}>🔘 功能按钮</Title>
             <Space direction="vertical" size="small" style={{ width: '100%' }}>
               <div>
-                <Text strong style={{ fontSize: '13px' }}>📂 打开项目文件夹</Text>
+                <Text strong style={{ fontSize: '13px' }}>📂 打开时光机文件夹</Text>
                 <br />
                 <Text type="secondary" style={{ fontSize: '12px' }}>选择要管理的文件夹</Text>
               </div>
@@ -743,6 +779,12 @@ function App() {
           />
         </Space>
       </Drawer>
+
+      {/* 软件更新说明抽屉 */}
+      <ReleaseNotes
+        visible={releaseNotesVisible}
+        onClose={() => setReleaseNotesVisible(false)}
+      />
     </Layout>
   )
 }

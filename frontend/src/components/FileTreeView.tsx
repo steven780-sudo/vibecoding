@@ -115,7 +115,7 @@ export const FileTreeView: React.FC<FileTreeViewProps> = ({
   return (
     <div
       style={{
-        maxHeight: '400px',
+        maxHeight: '250px',
         overflowY: 'auto',
         overflowX: 'auto',
         border: '1px solid #f0f0f0',

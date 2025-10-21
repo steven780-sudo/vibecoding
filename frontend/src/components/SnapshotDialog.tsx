@@ -70,7 +70,7 @@ export const SnapshotDialog: React.FC<SnapshotDialogProps> = ({
   const handleConfirm = async () => {
     // 验证必填字段
     if (!description.trim()) {
-      message.error('请输入快照描述')
+      message.error('请输入备份描述')
       return
     }
 
@@ -90,14 +90,14 @@ export const SnapshotDialog: React.FC<SnapshotDialogProps> = ({
       const success = await onCreateCommit(repoPath, fullMessage, selectedFiles)
 
       if (success) {
-        message.success('快照创建成功')
+        message.success('备份创建成功')
         handleClose()
         onSuccess()
       } else {
-        message.error('快照创建失败')
+        message.error('备份创建失败')
       }
     } catch (error) {
-      message.error('快照创建失败')
+      message.error('备份创建失败')
     } finally {
       setLoading(false)
     }
@@ -110,7 +110,7 @@ export const SnapshotDialog: React.FC<SnapshotDialogProps> = ({
 
   return (
     <Modal
-      title="创建快照"
+      title="创建备份"
       open={visible}
       onCancel={handleClose}
       width={600}
@@ -129,14 +129,14 @@ export const SnapshotDialog: React.FC<SnapshotDialogProps> = ({
       ]}
     >
       <Space direction="vertical" style={{ width: '100%' }} size="large">
-        {/* 快照描述 */}
+        {/* 备份描述 */}
         <div>
           <div style={{ marginBottom: 8 }}>
             <span style={{ color: '#ff4d4f' }}>* </span>
-            快照描述
+            备份描述
           </div>
           <Input
-            placeholder="请输入快照描述（必填）"
+            placeholder="请输入备份描述（必填）"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             maxLength={100}

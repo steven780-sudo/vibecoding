@@ -5,6 +5,7 @@ import {
   UserOutlined,
   RollbackOutlined,
   ExclamationCircleOutlined,
+  IdcardOutlined,
 } from '@ant-design/icons'
 import { apiClient } from '../api'
 import type { CommitLog } from '../types/api'
@@ -19,7 +20,7 @@ interface HistoryViewerProps {
 
 /**
  * HistoryViewer 组件
- * 显示提交历史时间线，支持回滚操作
+ * 显示提交历史时间线，支持恢复操作
  */
 export const HistoryViewer: React.FC<HistoryViewerProps> = ({
   commits,
@@ -45,20 +46,20 @@ export const HistoryViewer: React.FC<HistoryViewerProps> = ({
     })
   }
 
-  // 显示回滚确认对话框
+  // 显示恢复确认对话框
   const showCheckoutConfirm = (commit: CommitLog) => {
     // 只显示提交消息的第一行（标题）
     const commitTitle = commit.message.split('\n')[0]
     
     Modal.confirm({
-      title: '确认回滚',
+      title: '确认恢复',
       icon: <ExclamationCircleOutlined />,
       content: (
         <div>
-          <p>您确定要回滚到以下版本吗？</p>
+          <p>您确定要恢复到以下版本吗？</p>
           <div style={{ marginTop: 12, padding: 12, background: '#f5f5f5' }}>
             <p>
-              <strong>提交ID:</strong> {commit.id.substring(0, 8)}
+              <strong>备份ID:</strong> {commit.id.substring(0, 8)}
             </p>
             <p>
               <strong>描述:</strong> {commitTitle}
@@ -72,18 +73,18 @@ export const HistoryViewer: React.FC<HistoryViewerProps> = ({
           </div>
           <p style={{ marginTop: 12, color: '#ff4d4f' }}>
             ⚠️
-            警告：回滚操作会将工作目录恢复到该版本的状态，未提交的更改可能会丢失。
+            警告：恢复操作会将工作目录恢复到该版本的状态，未保存的更改可能会丢失。
           </p>
         </div>
       ),
-      okText: '确认回滚',
+      okText: '确认恢复',
       okType: 'danger',
       cancelText: '取消',
       onOk: () => handleCheckout(commit),
     })
   }
 
-  // 处理回滚操作
+  // 处理恢复操作
   const handleCheckout = async (commit: CommitLog) => {
     setCheckoutLoading(true)
     setSelectedCommit(commit)
@@ -93,14 +94,14 @@ export const HistoryViewer: React.FC<HistoryViewerProps> = ({
       const result = await apiClient.checkoutCommit(repoPath, commit.id)
 
       if (result.success) {
-        message.success('回滚成功')
+        message.success('恢复成功')
         onRefresh()
       } else {
         // 显示Backend返回的详细错误消息
-        message.error(result.error || '回滚失败')
+        message.error(result.error || '恢复失败')
       }
     } catch (error) {
-      message.error('回滚操作异常，请重试')
+      message.error('恢复操作异常，请重试')
     } finally {
       setCheckoutLoading(false)
       setSelectedCommit(null)
@@ -141,7 +142,7 @@ export const HistoryViewer: React.FC<HistoryViewerProps> = ({
         <Space>
           <ClockCircleOutlined />
           <span>历史记录</span>
-          <Tag color="blue">{commits.length} 个快照</Tag>
+          <Tag color="blue">{commits.length} 个备份</Tag>
         </Space>
       }
       loading={loading}
@@ -176,7 +177,7 @@ export const HistoryViewer: React.FC<HistoryViewerProps> = ({
                   }}
                   disabled={checkoutLoading}
                 >
-                  回滚到此版本
+                  恢复到此版本
                 </Button>
               }
               onClick={() => toggleExpand(commit.id)}
@@ -230,7 +231,7 @@ export const HistoryViewer: React.FC<HistoryViewerProps> = ({
                     <ClockCircleOutlined /> {formatDate(commit.date)}
                   </span>
                   <span>
-                    <Tag>{commit.id.substring(0, 8)}</Tag>
+                    <IdcardOutlined /> ID: <Tag>{commit.id.substring(0, 8)}</Tag>
                   </span>
                 </Space>
               </Space>

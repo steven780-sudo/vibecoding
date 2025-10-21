@@ -9,7 +9,10 @@ import {
   message,
   Tag,
   Divider,
+  Typography,
 } from 'antd'
+
+const { Text } = Typography
 import {
   BranchesOutlined,
   PlusOutlined,
@@ -53,22 +56,22 @@ export const BranchManager: React.FC<BranchManagerProps> = ({
   const [targetBranch, setTargetBranch] = useState('main')
   const [actionLoading, setActionLoading] = useState(false)
 
-  // 处理创建分支
+  // 处理创建副本
   const handleCreateBranch = async () => {
     if (!newBranchName.trim()) {
-      message.error('请输入分支名称')
+      message.error('请输入副本名称')
       return
     }
 
-    // 验证分支名称格式
+    // 验证副本名称格式
     if (!/^[a-zA-Z0-9_-]+$/.test(newBranchName)) {
-      message.error('分支名称只能包含字母、数字、下划线和连字符')
+      message.error('副本名称只能包含字母、数字、下划线和连字符')
       return
     }
 
-    // 检查分支是否已存在
+    // 检查副本是否已存在
     if (branches.includes(newBranchName)) {
-      message.error('分支已存在')
+      message.error('副本已存在')
       return
     }
 
@@ -78,41 +81,41 @@ export const BranchManager: React.FC<BranchManagerProps> = ({
       const success = await onCreateBranch(repoPath, newBranchName)
 
       if (success) {
-        message.success(`分支 "${newBranchName}" 创建成功`)
+        message.success(`副本 "${newBranchName}" 创建成功`)
         setCreateModalVisible(false)
         const createdBranchName = newBranchName
         setNewBranchName('')
         
-        // 自动切换到新创建的分支
+        // 自动切换到新创建的副本
         try {
           const switchSuccess = await onSwitchBranch(repoPath, createdBranchName)
           if (switchSuccess) {
-            message.success(`已自动切换到分支 "${createdBranchName}"`)
+            message.success(`已自动切换到副本 "${createdBranchName}"`)
           }
         } catch (error) {
           // 切换失败不影响创建成功的提示
-          console.error('自动切换分支失败:', error)
+          console.error('自动切换副本失败:', error)
         }
         
         onRefresh()
       } else {
-        message.error('创建分支失败')
+        message.error('创建副本失败')
       }
     } catch (error) {
-      message.error('创建分支失败')
+      message.error('创建副本失败')
     } finally {
       setActionLoading(false)
     }
   }
 
-  // 处理切换分支
+  // 处理切换副本
   const handleSwitchBranch = async (branch: string) => {
     if (branch === currentBranch) {
       return
     }
 
     Modal.confirm({
-      title: '确认切换分支',
+      title: '确认切换副本',
       icon: <ExclamationCircleOutlined />,
       content: (
         <div>
@@ -121,7 +124,7 @@ export const BranchManager: React.FC<BranchManagerProps> = ({
             <Tag color="green">{branch}</Tag> 吗？
           </p>
           <p style={{ color: '#ff4d4f' }}>
-            ⚠️ 请确保当前分支的更改已保存为快照。
+            ⚠️ 请确保当前副本的更改已保存为备份。
           </p>
         </div>
       ),
@@ -132,13 +135,13 @@ export const BranchManager: React.FC<BranchManagerProps> = ({
         try {
           const success = await onSwitchBranch(repoPath, branch)
           if (success) {
-            message.success(`已切换到分支 "${branch}"`)
+            message.success(`已切换到副本 "${branch}"`)
             onRefresh()
           } else {
-            message.error('切换分支失败')
+            message.error('切换副本失败')
           }
         } catch (error) {
-          message.error('切换分支失败')
+          message.error('切换副本失败')
         } finally {
           setActionLoading(false)
         }
@@ -149,12 +152,12 @@ export const BranchManager: React.FC<BranchManagerProps> = ({
   // 显示合并预览对话框
   const showMergeModal = () => {
     if (!currentBranch) {
-      message.error('无法确定当前分支')
+      message.error('无法确定当前副本')
       return
     }
 
     if (currentBranch === 'main') {
-      message.warning('当前已在主分支，无需合并')
+      message.warning('当前已在主本，无需合并')
       return
     }
 
@@ -162,10 +165,10 @@ export const BranchManager: React.FC<BranchManagerProps> = ({
     setMergeModalVisible(true)
   }
 
-  // 处理合并分支
+  // 处理合并副本
   const handleMergeBranch = async () => {
     if (!currentBranch) {
-      message.error('无法确定当前分支')
+      message.error('无法确定当前副本')
       return
     }
 
@@ -191,16 +194,16 @@ export const BranchManager: React.FC<BranchManagerProps> = ({
           })
         } else {
           message.success(
-            `分支 "${currentBranch}" 已成功合并到 "${targetBranch}"`
+            `副本 "${currentBranch}" 已成功合并到 "${targetBranch}"`
           )
         }
         setMergeModalVisible(false)
         onRefresh()
       } else {
-        message.error('合并分支失败')
+        message.error('合并副本失败')
       }
     } catch (error) {
-      message.error('合并分支失败')
+      message.error('合并副本失败')
     } finally {
       setActionLoading(false)
     }
@@ -212,31 +215,34 @@ export const BranchManager: React.FC<BranchManagerProps> = ({
         title={
           <Space>
             <BranchesOutlined />
-            <span>分支管理</span>
+            <span>副本管理</span>
+            <Text type="secondary" style={{ fontSize: '12px', fontWeight: 'normal' }}>
+              (main代表主本，其余均为副本)
+            </Text>
           </Space>
         }
         loading={loading}
       >
-        <Space direction="vertical" style={{ width: '100%' }} size="middle">
-          {/* 当前分支显示 */}
+        <Space direction="vertical" style={{ width: '100%' }} size="small">
+          {/* 当前副本显示 */}
           <div>
-            <div style={{ marginBottom: 8, color: '#666' }}>当前分支</div>
-            <Tag color="blue" style={{ fontSize: '14px', padding: '4px 12px' }}>
+            <div style={{ marginBottom: 4, color: '#666', fontSize: '12px' }}>当前副本</div>
+            <Tag color="blue" style={{ fontSize: '13px', padding: '2px 8px' }}>
               <BranchesOutlined /> {currentBranch || '未知'}
             </Tag>
           </div>
 
-          <Divider style={{ margin: '8px 0' }} />
+          <Divider style={{ margin: '4px 0' }} />
 
-          {/* 分支选择器 */}
+          {/* 副本选择器 */}
           <div>
-            <div style={{ marginBottom: 8, color: '#666' }}>切换分支</div>
+            <div style={{ marginBottom: 4, color: '#666', fontSize: '12px' }}>切换副本</div>
             <Select
               style={{ width: '100%' }}
               value={currentBranch}
               onChange={handleSwitchBranch}
               disabled={actionLoading || branches.length === 0}
-              placeholder="选择分支"
+              placeholder="选择副本"
               suffixIcon={<SwapOutlined />}
             >
               {branches.map((branch) => (
@@ -255,10 +261,10 @@ export const BranchManager: React.FC<BranchManagerProps> = ({
             </Select>
           </div>
 
-          <Divider style={{ margin: '8px 0' }} />
+          <Divider style={{ margin: '4px 0' }} />
 
           {/* 操作按钮 */}
-          <Space style={{ width: '100%' }} direction="vertical">
+          <Space style={{ width: '100%' }} direction="vertical" size="small">
             <Button
               type="primary"
               icon={<PlusOutlined />}
@@ -266,7 +272,7 @@ export const BranchManager: React.FC<BranchManagerProps> = ({
               disabled={actionLoading}
               block
             >
-              创建新分支
+              创建新副本
             </Button>
 
             {currentBranch && currentBranch !== 'main' && (
@@ -276,16 +282,16 @@ export const BranchManager: React.FC<BranchManagerProps> = ({
                 disabled={actionLoading}
                 block
               >
-                合并到主版本
+                合并到主本
               </Button>
             )}
           </Space>
         </Space>
       </Card>
 
-      {/* 创建分支对话框 */}
+      {/* 创建副本对话框 */}
       <Modal
-        title="创建新分支"
+        title="创建新副本"
         open={createModalVisible}
         onCancel={() => {
           setCreateModalVisible(false)
@@ -299,7 +305,7 @@ export const BranchManager: React.FC<BranchManagerProps> = ({
         <Space direction="vertical" style={{ width: '100%' }}>
           <div>
             <div style={{ marginBottom: 8 }}>
-              分支名称 <span style={{ color: '#ff4d4f' }}>*</span>
+              副本名称 <span style={{ color: '#ff4d4f' }}>*</span>
             </div>
             <Input
               placeholder="例如: feature-new-ui"
@@ -313,7 +319,7 @@ export const BranchManager: React.FC<BranchManagerProps> = ({
           </div>
           <div style={{ padding: 12, background: '#f5f5f5', borderRadius: 4 }}>
             <div style={{ fontSize: '12px', color: '#666' }}>
-              新分支将基于当前分支 <Tag color="blue">{currentBranch}</Tag> 创建
+              新副本将基于当前副本 <Tag color="blue">{currentBranch}</Tag> 创建
             </div>
           </div>
         </Space>
@@ -321,7 +327,7 @@ export const BranchManager: React.FC<BranchManagerProps> = ({
 
       {/* 合并预览对话框 */}
       <Modal
-        title="合并分支"
+        title="合并副本"
         open={mergeModalVisible}
         onCancel={() => setMergeModalVisible(false)}
         onOk={handleMergeBranch}
@@ -333,7 +339,7 @@ export const BranchManager: React.FC<BranchManagerProps> = ({
         <Space direction="vertical" style={{ width: '100%' }} size="middle">
           <div>
             <p>
-              将分支 <Tag color="green">{currentBranch}</Tag> 合并到{' '}
+              将副本 <Tag color="green">{currentBranch}</Tag> 合并到{' '}
               <Tag color="blue">{targetBranch}</Tag>
             </p>
           </div>
@@ -341,7 +347,7 @@ export const BranchManager: React.FC<BranchManagerProps> = ({
           <div style={{ padding: 12, background: '#fff7e6', borderRadius: 4 }}>
             <ExclamationCircleOutlined style={{ color: '#faad14' }} />
             <span style={{ marginLeft: 8, color: '#666' }}>
-              合并操作会将当前分支的所有更改应用到目标分支
+              合并操作会将当前副本的所有更改应用到目标副本
             </span>
           </div>
 
@@ -352,7 +358,7 @@ export const BranchManager: React.FC<BranchManagerProps> = ({
               </p>
               <ul style={{ margin: '8px 0', paddingLeft: 20 }}>
                 <li>如果存在冲突，需要手动解决</li>
-                <li>建议在合并前创建快照</li>
+                <li>建议在合并前创建备份</li>
               </ul>
             </div>
           </div>
