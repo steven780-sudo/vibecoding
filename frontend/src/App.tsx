@@ -238,15 +238,15 @@ function App() {
                         <Text>{repository.status.branch}</Text>
                       </div>
                       <div>
-                        <Text strong>变更文件: </Text>
+                        <Text strong>待提交的变更: </Text>
                         <Text>{repository.status.changes.length} 个</Text>
                       </div>
                       
-                      {/* 变更文件列表 */}
+                      {/* 待提交的变更列表 */}
                       {repository.status.changes.length > 0 && (
                         <div style={{ marginTop: '12px' }}>
                           <Text strong style={{ marginBottom: '8px', display: 'block' }}>
-                            变更文件:
+                            待提交的变更:
                           </Text>
                           <div style={{ 
                             maxHeight: '150px', 
@@ -289,11 +289,11 @@ function App() {
                         </div>
                       )}
                       
-                      {/* 已追踪文件列表 */}
+                      {/* 已追踪的文件列表 */}
                       {repository.trackedFiles.length > 0 && (
                         <div style={{ marginTop: '12px' }}>
                           <Text strong style={{ marginBottom: '8px', display: 'block' }}>
-                            仓库文件 ({repository.trackedFiles.length}):
+                            已追踪的文件 ({repository.trackedFiles.length}):
                           </Text>
                           <div style={{ 
                             maxHeight: '200px', 
