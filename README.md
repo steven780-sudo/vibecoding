@@ -2,300 +2,188 @@
 
 <div align="center">
 
-**一款为非技术用户设计的轻量级、本地优先的文件版本管理工具**
+**告别混乱的文件命名，轻松管理文件版本**
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
-[![Node](https://img.shields.io/badge/node-18+-green.svg)](https://nodejs.org/)
-[![Tauri](https://img.shields.io/badge/tauri-2.0-orange.svg)](https://tauri.app/)
-
-[功能特性](#功能特性) • [快速开始](#快速开始) • [用户文档](#用户文档) • [开发指南](#开发指南)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/yourusername/chronos/releases)
 
 </div>
 
 ---
 
-## 📖 项目简介
+## 📥 立即下载
 
-Chronos 是一款图形化的 Git 版本管理工具，它将强大的 Git 功能包装在友好的用户界面中，让非技术用户也能轻松管理文件版本。
+### macOS 用户
 
-### 核心价值
+**[⬇️ 下载 Chronos v1.1.0 (Apple Silicon)](frontend/src-tauri/target/release/bundle/dmg/Chronos_1.0.0_aarch64.dmg)**
 
-- 🚫 **告别混乱命名** - 不再需要 "报告_最终版_v3_真正最终版.doc"
-- ⏮️ **时光穿梭** - 随时回到文件的任何历史版本
-- 🌿 **安全实验** - 通过分支功能安全地尝试新想法
-- 💻 **完全本地** - 零云依赖，所有数据保持在本地
-- 🖥️ **原生桌面应用** - 基于Tauri的跨平台桌面应用
+下载后双击安装即可使用。
+
+> **首次打开提示**: 如果系统提示"无法打开，因为来自未识别的开发者"，请右键点击应用选择"打开"。
 
 ---
 
-## ✨ 功能特性
+## 💡 为什么需要 Chronos？
 
-### 🗂️ 仓库管理
-- ✅ 初始化文件夹为"时光库"
-- ✅ 查看仓库状态和文件变更
-- ✅ 支持中文文件名和路径
-- ✅ 最近使用仓库列表
+你是否遇到过这些问题：
 
-### 📸 快照管理
-- ✅ 创建快照保存文件状态
-- ✅ 选择要包含的文件
-- ✅ 添加描述和详细说明
-- ✅ 查看完整历史记录
+❌ 文件命名混乱：`报告_最终版_v3_真正最终版.doc`  
+❌ 不敢删除旧内容，怕以后需要  
+❌ 想尝试新想法，但怕搞坏现有版本  
+❌ 不小心删除了重要内容，无法恢复
 
-### ⏮️ 版本控制
-- ✅ 查看历史快照时间线
-- ✅ 展开查看详细信息
-- ✅ 一键回滚到任意版本
-- ✅ 安全的确认机制
-
-### 🌿 分支管理
-- ✅ 创建实验性分支
-- ✅ 在分支间自由切换
-- ✅ 分支隔离保护主版本
-- ✅ 合并分支到主版本
-
-### ⚡ 性能表现
-- ✅ 毫秒级响应速度
-- ✅ 处理100+文件无压力
-- ✅ 流畅的用户界面
-- ✅ 无卡顿体验
+✅ **Chronos 帮你解决这些问题！**
 
 ---
 
-## 🚀 快速开始
+## ✨ 核心功能
 
-### 方式一：使用桌面应用（推荐）
+### 📸 创建快照
+保存文件的任意时刻状态，就像游戏存档一样。
 
-1. 下载最新版本的安装包
-2. 双击安装并运行
-3. 开始使用！
+### ⏮️ 时光穿梭
+一键回到任何历史版本，再也不怕误删或改错。
 
-### 方式二：从源码运行
+### 🌿 安全实验
+创建分支尝试新想法，不影响主版本，满意后再合并。
 
-#### 前置要求
-
-- **Python** 3.10 或更高版本
-- **Node.js** 18 或更高版本  
-- **Git** 2.0 或更高版本
-
-#### 安装步骤
-
-```bash
-# 1. 克隆项目
-git clone <repository-url>
-cd chronos
-
-# 2. 安装Backend依赖
-cd backend
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-
-# 3. 安装Frontend依赖
-cd ../frontend
-npm install
-
-# 4. 启动应用
-npm run dev  # 开发模式
-# 或
-npm run tauri:dev  # Tauri桌面应用模式
-```
+### 💻 完全本地
+所有数据保存在你的电脑上，无需联网，隐私安全。
 
 ---
 
-## 📚 用户文档
+## 🚀 快速上手
 
-- 📖 **[安装指南](./docs/user/INSTALLATION_GUIDE.md)** - 详细的安装步骤和环境配置
-- 📘 **[使用教程](./docs/user/USER_GUIDE.md)** - 完整的功能使用指南
-- ❓ **[常见问题](./docs/user/FAQ.md)** - 常见问题解答和故障排除
-- 🔧 **[Tauri构建指南](./docs/TAURI_BUILD_GUIDE.md)** - 桌面应用打包说明
+### 1️⃣ 安装应用
 
----
+下载并安装 Chronos（见上方下载链接）。
 
-## 🛠️ 技术栈
+### 2️⃣ 打开仓库
 
-### Backend
-- **Python 3.10+** - 编程语言
-- **FastAPI** - 现代化 Web 框架
-- **Git CLI** - 版本控制核心引擎
-- **Pytest** - 单元测试框架
+启动应用后，点击"打开仓库"，输入你想管理的文件夹路径。
 
-### Frontend
-- **React 18** - UI 框架
-- **TypeScript** - 类型安全
-- **Vite** - 快速构建工具
-- **Ant Design 5.x** - 企业级 UI 组件
-- **Tauri 2.0** - 桌面应用框架
+**示例路径**：
+- `/Users/你的用户名/Documents/我的项目`
+- `/Users/你的用户名/Desktop/论文`
 
-### 开发工具
-- **Black** - Python 代码格式化
-- **Ruff** - Python 代码检查
-- **Prettier** - TypeScript 代码格式化
-- **ESLint** - TypeScript 代码检查
-- **Vitest** - Frontend 测试框架
+### 3️⃣ 创建第一个快照
+
+1. 修改文件夹中的文件
+2. 点击"创建快照"按钮
+3. 输入描述（如"完成第一章"）
+4. 点击确认
+
+### 4️⃣ 查看历史
+
+在右侧"历史记录"中查看所有快照，点击任意快照可以查看详情。
+
+### 5️⃣ 回滚版本
+
+找到想要恢复的快照，点击"回滚"按钮，确认后即可恢复。
 
 ---
 
-## 💻 开发指南
+## 📖 使用指南
 
-### 项目结构
+### 创建快照的最佳实践
 
-```
-chronos/
-├── backend/                 # Python Backend
-│   ├── api/                # API 路由处理
-│   ├── services/           # 业务逻辑层
-│   ├── tests/              # 单元测试
-│   └── main.py             # FastAPI 应用入口
-│
-├── frontend/               # React Frontend
-│   ├── src/
-│   │   ├── api/           # API 客户端
-│   │   ├── components/    # React 组件
-│   │   ├── hooks/         # 自定义 Hooks
-│   │   └── App.tsx        # 应用主组件
-│   ├── src-tauri/         # Tauri 配置
-│   └── package.json       # Node 依赖
-│
-├── scripts/               # 实用脚本
-├── docs/                  # 项目文档
-└── README.md             # 本文件
-```
+✅ **好的做法**：
+- 完成一个小任务后立即创建快照
+- 使用清晰的描述："添加第三章内容"
+- 定期创建快照，不要等到做了很多改动
 
-### 开发命令
+❌ **避免**：
+- 描述过于简单："更新"、"修改"
+- 长时间不创建快照
+- 快照描述不清楚
 
-#### Backend 开发
+### 分支功能
 
-```bash
-cd backend
-source venv/bin/activate
+**什么时候使用分支？**
+- 想尝试新的写作思路
+- 需要做大幅度修改
+- 多人协作时各自工作
 
-# 启动开发服务器
-python -m uvicorn main:app --reload --port 8765
+**如何使用分支？**
+1. 点击"创建分支"，输入分支名（如"实验性修改"）
+2. 在新分支中自由修改
+3. 满意后点击"合并分支"合并到主版本
+4. 不满意就切换回主分支，放弃修改
 
-# 代码格式化
-black .
+### 文件状态说明
 
-# 代码检查
-ruff check .
-
-# 运行测试
-pytest tests/ -v
-```
-
-#### Frontend 开发
-
-```bash
-cd frontend
-
-# 启动开发服务器
-npm run dev
-
-# 代码格式化
-npm run format
-
-# 代码检查
-npm run lint
-
-# 运行测试
-npm test
-
-# 构建生产版本
-npm run build
-```
-
-#### Tauri 桌面应用
-
-```bash
-cd frontend
-
-# 开发模式
-npm run tauri:dev
-
-# 构建应用
-npm run tauri:build
-```
-
-构建完成后，应用程序位于：
-- macOS: `frontend/src-tauri/target/release/bundle/macos/Chronos.app`
-- DMG: `frontend/src-tauri/target/release/bundle/dmg/Chronos_1.0.0_aarch64.dmg`
+- 🟢 **新增** - 新创建的文件
+- 🟡 **修改** - 内容被修改的文件
+- 🔴 **删除** - 被删除的文件
 
 ---
 
-## 📊 版本历史
+## ❓ 常见问题
 
-### v1.1 (最新)
-- ✅ 优化错误提示，显示用户友好的中文消息
-- ✅ 隐藏系统文件，不在界面显示
-- ✅ 添加最近使用仓库列表
-- ✅ 自动刷新文件列表
-- ✅ 创建分支后自动切换
+### Q: 哪些文件会被管理？
 
-### v1.0 (MVP)
-- ✅ 基础仓库管理
-- ✅ 快照创建和查看
-- ✅ 历史记录和回滚
-- ✅ 分支管理和合并
-- ✅ 性能优化
+A: 文件夹中的所有文件都会被追踪，但系统文件（如`.DS_Store`）会自动忽略。
 
-详细发布说明：
-- [v1.0 发布说明](./docs/RELEASE_v1.0.md)
-- [v1.1 发布说明](./docs/RELEASE_v1.1.md)
+### Q: 快照会占用很多空间吗？
 
----
+A: 不会。Chronos 使用 Git 技术，只保存文件的变化部分，非常节省空间。
 
-## 🗺️ 路线图
+### Q: 可以管理多个文件夹吗？
 
-### 🚀 未来规划
-- [ ] Windows/Linux 支持
-- [ ] 文件夹选择对话框（Tauri Dialog API）
-- [ ] 更多高级功能
-- [ ] 性能持续优化
-- [ ] 插件系统
+A: 可以。每个文件夹都是独立的"时光库"，互不影响。应用会记住最近使用的仓库。
+
+### Q: 数据安全吗？
+
+A: 非常安全。所有数据都保存在你的电脑上，不会上传到任何服务器。
+
+### Q: 误删了快照怎么办？
+
+A: 快照一旦创建就不会被删除（除非手动删除`.git`文件夹）。你可以随时回到任何历史版本。
+
+### Q: 可以在多台电脑间同步吗？
+
+A: 当前版本不支持。如需同步，可以将时光库文件夹放在云盘（如iCloud、Dropbox）中。
 
 ---
 
-## 🤝 贡献指南
+## 🛠️ 技术信息
 
-我们欢迎所有形式的贡献！
+### 系统要求
 
-### 提交规范
+- **操作系统**: macOS 10.13 或更高版本
+- **处理器**: Apple Silicon (M1/M2) 或 Intel
+- **磁盘空间**: 至少 100MB
 
-使用约定式提交（Conventional Commits）：
+### 技术栈
 
-- `feat:` 新功能
-- `fix:` Bug 修复
-- `docs:` 文档更新
-- `style:` 代码格式
-- `refactor:` 代码重构
-- `test:` 测试相关
-- `chore:` 构建/工具
+- **Backend**: Python + FastAPI + Git
+- **Frontend**: React + TypeScript + Ant Design
+- **Desktop**: Tauri 2.0
+
+### 开发者文档
+
+- [项目结构](./PROJECT_STRUCTURE.md)
+- [构建指南](./docs/TAURI_BUILD_GUIDE.md)
+- [发布说明](./docs/RELEASE_v1.1.md)
+
+---
+
+## 📞 获取帮助
+
+- **问题反馈**: [GitHub Issues](https://github.com/yourusername/chronos/issues)
+- **功能建议**: [GitHub Discussions](https://github.com/yourusername/chronos/discussions)
 
 ---
 
 ## 📄 许可证
 
-本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件
-
----
-
-## 🙏 致谢
-
-感谢所有为 Chronos 项目做出贡献的开发者和测试人员！
-
-特别感谢：
-- **Git** - 强大的版本控制系统
-- **FastAPI** - 优秀的 Python Web 框架
-- **React** - 灵活的 UI 框架
-- **Ant Design** - 美观的组件库
-- **Tauri** - 现代化的桌面应用框架
+MIT License - 详见 [LICENSE](LICENSE)
 
 ---
 
 <div align="center">
 
-**⭐ 如果这个项目对你有帮助，请给我们一个 Star！**
+**⭐ 如果 Chronos 对你有帮助，请给我们一个 Star！**
 
 Made with ❤️ by sunshunda
 
