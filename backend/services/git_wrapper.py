@@ -100,7 +100,7 @@ class GitWrapper:
 
     def init_repository(self) -> Dict[str, Any]:
         """
-        初始化Git仓库
+        初始化Git仓库，并自动创建初始提交
 
         Returns:
             包含操作结果的字典
@@ -142,6 +142,28 @@ class GitWrapper:
         chronos_file = self.repo_path / ".chronos"
         with open(chronos_file, "w", encoding="utf-8") as f:
             json.dump(chronos_config, f, ensure_ascii=False, indent=2)
+
+        # 自动创建初始提交（如果有文件）
+        # 这样用户初始化后就能立即看到文件和历史记录
+        try:
+            # 添加所有文件到暂存区
+            self._run_git_command(["add", "."])
+
+            # 检查是否有文件可提交
+            status_result = self._run_git_command(
+                ["status", "--porcelain"], check=False
+            )
+
+            if status_result.stdout.strip():
+                # 有文件，创建初始提交
+                self._run_git_command(
+                    ["commit", "-m", "Initial commit by Chronos\n\n时光库初始化完成"]
+                )
+
+        except GitError:
+            # 如果初始提交失败，不影响初始化结果
+            # 用户仍然可以手动创建第一个快照
+            pass
 
         return {
             "success": True,
