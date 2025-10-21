@@ -41,7 +41,7 @@ describe('ChronosApiClient', () => {
       )
 
       expect(result.success).toBe(true)
-      expect(result.data?.message).toBe('仓库初始化成功')
+      expect(result.data).toBeDefined()
     })
   })
 

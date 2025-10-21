@@ -25,7 +25,7 @@ export const HistoryViewer: React.FC<HistoryViewerProps> = ({
   commits,
   loading,
   repoPath,
-  onCheckout,
+  onCheckout: _onCheckout,
   onRefresh,
 }) => {
   const [selectedCommit, setSelectedCommit] = useState<CommitLog | null>(null)

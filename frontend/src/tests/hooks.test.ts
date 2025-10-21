@@ -74,7 +74,7 @@ describe('useRepository Hook', () => {
   it('initRepository应该成功初始化', async () => {
     vi.mocked(apiClient.initRepository).mockResolvedValueOnce({
       success: true,
-      data: { message: '初始化成功' },
+      data: { already_initialized: false },
     })
 
     const { result } = renderHook(() => useRepository())

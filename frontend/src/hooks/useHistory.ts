@@ -70,7 +70,7 @@ export function useHistory(): UseHistoryReturn {
           return true
         } else {
           // 使用Backend返回的详细错误消息
-          const errorMessage = result.message || result.error || '回滚失败'
+          const errorMessage = result.error || '回滚失败'
           setState((prev) => ({
             ...prev,
             loading: false,
