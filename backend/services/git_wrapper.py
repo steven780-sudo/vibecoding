@@ -125,8 +125,17 @@ class GitWrapper:
                 "already_initialized": True,
             }
 
-        # 执行git init
-        self._run_git_command(["init"])
+        # 执行git init，使用-b参数指定初始分支名为main
+        # 这样可以确保在所有Git版本中都使用main作为默认分支
+        try:
+            self._run_git_command(["init", "-b", "main"])
+        except GitError:
+            # 如果Git版本太旧不支持-b参数，使用传统方式并在后续重命名分支
+            self._run_git_command(["init"])
+        
+        # 配置Git以支持中文文件名
+        # core.quotepath=false 可以让Git正确显示中文文件名，而不是转义为八进制编码
+        self._run_git_command(["config", "core.quotepath", "false"])
 
         # 创建.chronos配置文件
         chronos_config = {
@@ -143,8 +152,8 @@ class GitWrapper:
         with open(chronos_file, "w", encoding="utf-8") as f:
             json.dump(chronos_config, f, ensure_ascii=False, indent=2)
 
-        # 自动创建初始提交（如果有文件）
-        # 这样用户初始化后就能立即看到文件和历史记录
+        # 自动创建初始提交
+        # 这样用户初始化后就能立即看到文件和历史记录，并且分支名为main
         try:
             # 添加所有文件到暂存区
             self._run_git_command(["add", "."])
@@ -159,6 +168,21 @@ class GitWrapper:
                 self._run_git_command(
                     ["commit", "-m", "Initial commit by Chronos\n\n时光库初始化完成"]
                 )
+            else:
+                # 没有文件，创建空的初始提交以建立main分支
+                self._run_git_command(
+                    ["commit", "--allow-empty", "-m", "Initial commit by Chronos\n\n时光库初始化完成"]
+                )
+            
+            # 确保分支名为main（兼容旧版Git）
+            try:
+                current_branch = self._run_git_command(
+                    ["branch", "--show-current"], check=False
+                ).stdout.strip()
+                if current_branch and current_branch != "main":
+                    self._run_git_command(["branch", "-m", current_branch, "main"])
+            except GitError:
+                pass
 
         except GitError:
             # 如果初始提交失败，不影响初始化结果
@@ -210,14 +234,20 @@ class GitWrapper:
 
         # 解析输出
         changes = []
-        for line in result.stdout.strip().split("\n"):
+        # 注意：不要对整个输出使用strip()，因为会去掉第一行开头的空格
+        # Git status --porcelain的格式是固定的，每行都是"XY filename"
+        for line in result.stdout.splitlines():
             if not line:
                 continue
 
             # Git status --porcelain格式: XY filename
             # X表示暂存区状态，Y表示工作区状态
-            status_code = line[:2].strip()
-            filename = line[3:].strip()
+            # 前两个字符是状态码，第三个字符是空格，从第四个字符开始是文件名
+            if len(line) < 4:
+                continue
+                
+            status_code = line[:2]
+            filename = line[3:]
 
             # 标准化状态
             status = self._normalize_status(status_code)
@@ -411,7 +441,10 @@ class GitWrapper:
         self._verify_repository()
 
         # 构建git log命令
-        args = ["log", "--pretty=format:%H|%an|%ae|%at|%s|%P"]
+        # %H: commit hash, %an: author name, %ae: author email, %at: author timestamp
+        # %B: raw body (完整提交消息，包括标题和详细说明), %P: parent hashes
+        # 使用 %x00 (NULL字符) 作为记录分隔符，%x1F (Unit Separator) 作为字段分隔符
+        args = ["log", "--pretty=format:%H%x1F%an%x1F%ae%x1F%at%x1F%B%x1F%P%x00"]
 
         if limit:
             args.append(f"-{limit}")
@@ -426,21 +459,25 @@ class GitWrapper:
             return []
 
         # 解析输出
+        # 使用 NULL 字符分隔每条记录
         commits = []
-        for line in result.stdout.strip().split("\n"):
-            if not line:
+        records = result.stdout.strip().split("\x00")
+        
+        for record in records:
+            if not record.strip():
                 continue
 
-            parts = line.split("|")
+            # 使用 Unit Separator 分隔字段
+            parts = record.split("\x1F")
             if len(parts) < 5:
                 continue
 
-            commit_id = parts[0]
-            author = parts[1]
-            email = parts[2]
-            timestamp = parts[3]
-            message = parts[4]
-            parents = parts[5].split() if len(parts) > 5 and parts[5] else []
+            commit_id = parts[0].strip()
+            author = parts[1].strip()
+            email = parts[2].strip()
+            timestamp = parts[3].strip()
+            message = parts[4].strip()  # 完整的提交消息（包括多行）
+            parents = parts[5].split() if len(parts) > 5 and parts[5].strip() else []
 
             # 转换时间戳为可读格式
             try:

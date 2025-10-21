@@ -6,6 +6,7 @@ import {
   RollbackOutlined,
   ExclamationCircleOutlined,
 } from '@ant-design/icons'
+import { apiClient } from '../api'
 import type { CommitLog } from '../types/api'
 
 interface HistoryViewerProps {
@@ -29,9 +30,26 @@ export const HistoryViewer: React.FC<HistoryViewerProps> = ({
 }) => {
   const [selectedCommit, setSelectedCommit] = useState<CommitLog | null>(null)
   const [checkoutLoading, setCheckoutLoading] = useState(false)
+  const [expandedCommits, setExpandedCommits] = useState<Set<string>>(new Set())
+
+  // 切换展开/折叠状态
+  const toggleExpand = (commitId: string) => {
+    setExpandedCommits((prev) => {
+      const newSet = new Set(prev)
+      if (newSet.has(commitId)) {
+        newSet.delete(commitId)
+      } else {
+        newSet.add(commitId)
+      }
+      return newSet
+    })
+  }
 
   // 显示回滚确认对话框
   const showCheckoutConfirm = (commit: CommitLog) => {
+    // 只显示提交消息的第一行（标题）
+    const commitTitle = commit.message.split('\n')[0]
+    
     Modal.confirm({
       title: '确认回滚',
       icon: <ExclamationCircleOutlined />,
@@ -43,7 +61,7 @@ export const HistoryViewer: React.FC<HistoryViewerProps> = ({
               <strong>提交ID:</strong> {commit.id.substring(0, 8)}
             </p>
             <p>
-              <strong>描述:</strong> {commit.message}
+              <strong>描述:</strong> {commitTitle}
             </p>
             <p>
               <strong>作者:</strong> {commit.author}
@@ -71,16 +89,18 @@ export const HistoryViewer: React.FC<HistoryViewerProps> = ({
     setSelectedCommit(commit)
 
     try {
-      const success = await onCheckout(repoPath, commit.id)
+      // 直接调用API获取详细的错误信息
+      const result = await apiClient.checkoutCommit(repoPath, commit.id)
 
-      if (success) {
+      if (result.success) {
         message.success('回滚成功')
         onRefresh()
       } else {
-        message.error('回滚失败')
+        // 显示Backend返回的详细错误消息
+        message.error(result.error || '回滚失败')
       }
     } catch (error) {
-      message.error('回滚失败')
+      message.error('回滚操作异常，请重试')
     } finally {
       setCheckoutLoading(false)
       setSelectedCommit(null)
@@ -139,18 +159,27 @@ export const HistoryViewer: React.FC<HistoryViewerProps> = ({
           >
             <Card
               size="small"
-              style={{ marginBottom: 8 }}
+              style={{ 
+                marginBottom: 8,
+                cursor: 'pointer',
+                transition: 'all 0.3s'
+              }}
+              hoverable
               extra={
                 <Button
                   type="link"
                   icon={<RollbackOutlined />}
                   loading={checkoutLoading && selectedCommit?.id === commit.id}
-                  onClick={() => showCheckoutConfirm(commit)}
+                  onClick={(e) => {
+                    e.stopPropagation() // 防止触发卡片点击
+                    showCheckoutConfirm(commit)
+                  }}
                   disabled={checkoutLoading}
                 >
                   回滚到此版本
                 </Button>
               }
+              onClick={() => toggleExpand(commit.id)}
             >
               <Space
                 direction="vertical"
@@ -165,15 +194,27 @@ export const HistoryViewer: React.FC<HistoryViewerProps> = ({
                       最新
                     </Tag>
                   )}
+                  {commit.message.includes('\n') && (
+                    <Tag 
+                      color="blue" 
+                      style={{ marginLeft: 8, fontSize: '11px' }}
+                    >
+                      {expandedCommits.has(commit.id) ? '收起详情 ▲' : '展开详情 ▼'}
+                    </Tag>
+                  )}
                 </div>
 
-                {/* 详细描述（如果有） */}
-                {commit.message.includes('\n') && (
+                {/* 详细描述（如果有且已展开） */}
+                {commit.message.includes('\n') && expandedCommits.has(commit.id) && (
                   <div
                     style={{
                       color: '#666',
                       fontSize: '12px',
                       whiteSpace: 'pre-wrap',
+                      padding: '8px',
+                      background: '#f5f5f5',
+                      borderRadius: '4px',
+                      marginTop: '8px'
                     }}
                   >
                     {commit.message.split('\n').slice(1).join('\n').trim()}

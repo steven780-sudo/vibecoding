@@ -41,8 +41,16 @@ export function useBranches(): UseBranchesReturn {
       const result = await apiClient.getBranches(repoPath)
 
       if (result.success && result.data) {
+        // Backend返回的branches是对象数组 [{name: "main", is_current: true}]
+        // 需要转换为字符串数组 ["main", "feature-test"]
+        const branchNames = Array.isArray(result.data.branches)
+          ? result.data.branches.map((b: any) => 
+              typeof b === 'string' ? b : b.name
+            )
+          : []
+        
         setState({
-          branches: result.data.branches || [],
+          branches: branchNames,
           currentBranch: result.data.current || null,
           loading: false,
           error: null,

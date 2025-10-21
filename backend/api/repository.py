@@ -113,8 +113,10 @@ async def create_commit(request: CreateCommitRequest):
     将变更保存为新的提交
     """
     try:
+        print(f"DEBUG: Received commit request - path: {request.path}, message: {request.message}, files: {request.files}")
         wrapper = GitWrapper(request.path)
         result = wrapper.create_commit(request.message, request.files)
+        print(f"DEBUG: Git wrapper result: {result}")
 
         if not result["success"]:
             return ApiResponse(success=False, message=result["message"])
@@ -128,12 +130,18 @@ async def create_commit(request: CreateCommitRequest):
             success=True, message=result["message"], data={"commit": commit_data}
         )
     except RepositoryNotFoundError as e:
+        print(f"DEBUG: RepositoryNotFoundError: {e}")
         raise HTTPException(status_code=404, detail=str(e))
     except ValueError as e:
+        print(f"DEBUG: ValueError: {e}")
         raise HTTPException(status_code=400, detail=str(e))
     except GitError as e:
+        print(f"DEBUG: GitError: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
+        print(f"DEBUG: Exception: {type(e).__name__}: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"未知错误: {str(e)}")
 
 

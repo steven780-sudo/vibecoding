@@ -117,7 +117,7 @@ class TestRepositoryStatus:
     def test_get_current_branch(self, initialized_repo):
         """测试获取当前分支"""
         branch = initialized_repo.get_current_branch()
-        assert branch in ["main", "master"]
+        assert branch == "main"
 
 
 class TestCommitCreation:

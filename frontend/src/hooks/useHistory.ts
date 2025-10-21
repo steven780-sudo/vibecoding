@@ -69,10 +69,12 @@ export function useHistory(): UseHistoryReturn {
           setState((prev) => ({ ...prev, loading: false, error: null }))
           return true
         } else {
+          // 使用Backend返回的详细错误消息
+          const errorMessage = result.message || result.error || '回滚失败'
           setState((prev) => ({
             ...prev,
             loading: false,
-            error: result.error || '回滚失败',
+            error: errorMessage,
           }))
           return false
         }

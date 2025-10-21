@@ -45,7 +45,12 @@ class ChronosApiClient {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || `HTTP错误: ${response.status}`)
+        throw new Error(data.error || data.message || `HTTP错误: ${response.status}`)
+      }
+
+      // 如果Backend返回success=false，将message放到error字段中
+      if (data.success === false && data.message && !data.error) {
+        data.error = data.message
       }
 
       return data
@@ -167,11 +172,10 @@ class ChronosApiClient {
     repoPath: string,
     commitId: string
   ): Promise<ApiResponse<{ message: string }>> {
-    return this.post(
-      '/repository/checkout',
-      { commit_id: commitId },
-      { path: repoPath }
-    )
+    return this.post('/repository/checkout', {
+      path: repoPath,
+      commit_id: commitId,
+    })
   }
 
   /**
@@ -188,7 +192,10 @@ class ChronosApiClient {
     repoPath: string,
     name: string
   ): Promise<ApiResponse<{ message: string }>> {
-    return this.post('/repository/branch', { name }, { path: repoPath })
+    return this.post('/repository/branch', {
+      path: repoPath,
+      branch_name: name,
+    })
   }
 
   /**
@@ -198,7 +205,10 @@ class ChronosApiClient {
     repoPath: string,
     branch: string
   ): Promise<ApiResponse<{ message: string }>> {
-    return this.post('/repository/switch', { branch }, { path: repoPath })
+    return this.post('/repository/switch', {
+      path: repoPath,
+      branch_name: branch,
+    })
   }
 
   /**
@@ -209,11 +219,11 @@ class ChronosApiClient {
     sourceBranch: string,
     targetBranch: string
   ): Promise<ApiResponse<MergeResult>> {
-    return this.post(
-      '/repository/merge',
-      { source_branch: sourceBranch, target_branch: targetBranch },
-      { path: repoPath }
-    )
+    return this.post('/repository/merge', {
+      path: repoPath,
+      source_branch: sourceBranch,
+      target_branch: targetBranch,
+    })
   }
 }
 

@@ -142,8 +142,8 @@ class TestCommitAPI:
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
-        assert "commits" in data["data"]
-        assert len(data["data"]["commits"]) > 0
+        assert "logs" in data["data"]
+        assert len(data["data"]["logs"]) > 0
 
     def test_get_log_with_limit(self, temp_repo):
         """测试限制返回数量"""
@@ -163,7 +163,7 @@ class TestCommitAPI:
 
         assert response.status_code == 200
         data = response.json()
-        assert len(data["data"]["commits"]) == 2
+        assert len(data["data"]["logs"]) == 2
 
     def test_checkout_commit_success(self, temp_repo):
         """测试回滚提交"""
@@ -185,7 +185,7 @@ class TestCommitAPI:
 
         # 获取第一个提交的ID
         log_response = client.get(f"/api/repository/log?path={temp_repo}")
-        commits = log_response.json()["data"]["commits"]
+        commits = log_response.json()["data"]["logs"]
         first_commit_id = commits[-1]["id"]
 
         # 回滚到第一个提交
