@@ -15,7 +15,7 @@
 
 ### macOS 用户
 
-**[⬇️ 下载 Chronos v1.1.0 (Apple Silicon)](frontend/src-tauri/target/release/bundle/dmg/Chronos_1.0.0_aarch64.dmg)**
+**[⬇️ 下载 Chronos v1.1.0 (Apple Silicon)](Chronos_v1.1.0_macOS.dmg)**
 
 下载后双击安装即可使用。
 
