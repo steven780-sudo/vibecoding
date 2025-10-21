@@ -55,16 +55,23 @@ function buildFileTree(changes: Array<{ status: string; file: string }>): TreeDa
     const hasMore = parts.length > MAX_DEPTH
 
     displayParts.forEach((part, index) => {
+      const isLastPart = index === displayParts.length - 1
+      
       if (!current[part]) {
         current[part] = {
-          isFile: index === displayParts.length - 1 && !hasMore,
+          isFile: isLastPart && !hasMore,
           children: {},
-          status: change.status,
+          status: isLastPart ? change.status : undefined,
           fullPath: parts.slice(0, index + 1).join('/'),
         }
+      } else if (isLastPart && !hasMore) {
+        // 如果节点已存在，更新为文件状态
+        current[part].isFile = true
+        current[part].status = change.status
       }
+      
       // 如果是最后一级但还有更多层级，添加省略提示
-      if (index === displayParts.length - 1 && hasMore) {
+      if (isLastPart && hasMore) {
         const remainingPath = parts.slice(MAX_DEPTH).join('/')
         const ellipsisKey = `.../${remainingPath}`
         current[part].children[ellipsisKey] = {
@@ -765,76 +772,78 @@ function App() {
           </Space>
         }
         placement="right"
-        width={450}
+        width={400}
         open={helpDrawerVisible}
         onClose={() => setHelpDrawerVisible(false)}
       >
-        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
           {/* 核心用法 */}
           <div>
-            <Title level={4}>📝 核心用法</Title>
-            <Text>
+            <Title level={5} style={{ marginBottom: '8px' }}>📝 核心用法</Title>
+            <Text style={{ fontSize: '13px' }}>
               1. 打开文件夹 → 2. 修改文件 → 3. 创建备份 → 4. 查看历史
             </Text>
           </div>
 
-          <Divider />
+          <Divider style={{ margin: '12px 0' }} />
 
           {/* 功能按钮说明 */}
           <div>
-            <Title level={4}>🔘 功能按钮</Title>
-            <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+            <Title level={5} style={{ marginBottom: '8px' }}>🔘 功能按钮</Title>
+            <Space direction="vertical" size="small" style={{ width: '100%' }}>
               <div>
-                <Text strong>📂 打开项目文件夹</Text>
+                <Text strong style={{ fontSize: '13px' }}>📂 打开项目文件夹</Text>
                 <br />
-                <Text type="secondary">选择要管理的文件夹</Text>
+                <Text type="secondary" style={{ fontSize: '12px' }}>选择要管理的文件夹</Text>
               </div>
 
               <div>
-                <Text strong>💾 创建备份</Text>
+                <Text strong style={{ fontSize: '13px' }}>💾 创建备份</Text>
                 <br />
-                <Text type="secondary">为当前文件状态创建一个备份点</Text>
+                <Text type="secondary" style={{ fontSize: '12px' }}>为当前文件状态创建备份点</Text>
               </div>
 
               <div>
-                <Text strong>🔄 刷新</Text>
+                <Text strong style={{ fontSize: '13px' }}>🔄 刷新</Text>
                 <br />
-                <Text type="secondary">更新文件变更状态和历史记录</Text>
+                <Text type="secondary" style={{ fontSize: '12px' }}>更新文件变更状态</Text>
               </div>
 
               <div>
-                <Text strong>⏮️ 恢复</Text>
+                <Text strong style={{ fontSize: '13px' }}>⏮️ 恢复</Text>
                 <br />
-                <Text type="secondary">将文件恢复到某个历史备份点</Text>
+                <Text type="secondary" style={{ fontSize: '12px' }}>恢复到历史备份点</Text>
               </div>
 
               <div>
-                <Text strong>📋 创建副本</Text>
+                <Text strong style={{ fontSize: '13px' }}>📋 创建副本</Text>
                 <br />
-                <Text type="secondary">创建独立的工作副本，互不影响</Text>
+                <Text type="secondary" style={{ fontSize: '12px' }}>创建独立工作副本</Text>
               </div>
 
               <div>
-                <Text strong>🔀 合并副本</Text>
+                <Text strong style={{ fontSize: '13px' }}>🔀 合并副本</Text>
                 <br />
-                <Text type="secondary">将副本的修改合并到主版本</Text>
+                <Text type="secondary" style={{ fontSize: '12px' }}>合并副本到主版本</Text>
               </div>
             </Space>
           </div>
 
-          <Divider />
+          <Divider style={{ margin: '12px 0' }} />
 
           {/* 联系方式 */}
           <Alert
             message="需要帮助？"
             description={
-              <Space direction="vertical">
-                <Text>联系开发者：</Text>
-                <Text strong copyable>sunshunda@gmail.com</Text>
-              </Space>
+              <div>
+                <Text style={{ fontSize: '12px' }}>联系开发者：</Text>
+                <br />
+                <Text strong copyable style={{ fontSize: '13px' }}>sunshunda@gmail.com</Text>
+              </div>
             }
             type="info"
             showIcon
+            style={{ padding: '8px 12px' }}
           />
         </Space>
       </Drawer>
