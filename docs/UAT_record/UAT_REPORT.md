@@ -167,7 +167,27 @@ Frontend API客户端baseURL配置错误，缺少`/api`前缀。
 - **用户预期**: "我启用时光机，它就应该立刻看到并管理我所有的文件"
 - **实际行为**: 界面空白，什么都不显示
 
-**修复状态**: ✅ 已修复
+**修复状态**: ✅ 已修复并验证
+
+**验证结果**:
+```bash
+# 初始化新仓库
+curl -X POST "http://127.0.0.1:8765/api/repository/init" \
+  -d '{"path": "/Users/sunshunda/chronos-test-project-new"}'
+# 返回: {"success":true,"message":"时光库初始化成功"}
+
+# 查看历史记录
+curl -X GET "http://127.0.0.1:8765/api/repository/log?path=..."
+# 返回: 1条"Initial commit by Chronos"提交记录
+
+# 查看仓库状态
+curl -X GET "http://127.0.0.1:8765/api/repository/status?path=..."
+# 返回: {"branch":"master","changes":[],"is_clean":true}
+
+# 验证文件被追踪
+git -C ~/chronos-test-project-new ls-files
+# 输出: .chronos, docs/readme.md, file1.txt, file2.txt
+```
 
 **修复方案**:
 修改 `backend/services/git_wrapper.py` 的 `init_repository` 方法：
