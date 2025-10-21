@@ -1,4 +1,4 @@
-# Chronos - 本地文件时光机 ⏰
+# Chronos - 本地文件时光机 ⏰ copyright by sunshunda
 
 <div align="center">
 

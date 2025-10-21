@@ -142,37 +142,50 @@ function App() {
           )}
         </Space>
 
-        <Space>
-          {repoInitialized && (
-            <>
-              <Button
-                icon={<ReloadOutlined />}
-                onClick={refreshAll}
-                loading={globalLoading}
-              >
-                刷新
-              </Button>
+        <Space size="large">
+          <Text 
+            type="secondary" 
+            style={{ 
+              fontSize: '12px',
+              fontStyle: 'italic',
+              color: '#8c8c8c'
+            }}
+          >
+            Copyright © sunshunda
+          </Text>
+          
+          <Space>
+            {repoInitialized && (
+              <>
+                <Button
+                  icon={<ReloadOutlined />}
+                  onClick={refreshAll}
+                  loading={globalLoading}
+                >
+                  刷新
+                </Button>
+                <Button
+                  type="primary"
+                  icon={<CameraOutlined />}
+                  onClick={() => setSnapshotDialogVisible(true)}
+                  disabled={
+                    !repository.status || repository.status.changes.length === 0
+                  }
+                >
+                  创建快照
+                </Button>
+              </>
+            )}
+            {!repoInitialized && (
               <Button
                 type="primary"
-                icon={<CameraOutlined />}
-                onClick={() => setSnapshotDialogVisible(true)}
-                disabled={
-                  !repository.status || repository.status.changes.length === 0
-                }
+                icon={<FolderOpenOutlined />}
+                onClick={() => setInitModalVisible(true)}
               >
-                创建快照
+                打开仓库
               </Button>
-            </>
-          )}
-          {!repoInitialized && (
-            <Button
-              type="primary"
-              icon={<FolderOpenOutlined />}
-              onClick={() => setInitModalVisible(true)}
-            >
-              打开仓库
-            </Button>
-          )}
+            )}
+          </Space>
         </Space>
       </Header>
 
