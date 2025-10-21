@@ -242,18 +242,19 @@ function App() {
                         <Text>{repository.status.changes.length} 个</Text>
                       </div>
                       
-                      {/* 文件列表 */}
+                      {/* 变更文件列表 */}
                       {repository.status.changes.length > 0 && (
                         <div style={{ marginTop: '12px' }}>
                           <Text strong style={{ marginBottom: '8px', display: 'block' }}>
-                            文件列表:
+                            变更文件:
                           </Text>
                           <div style={{ 
-                            maxHeight: '200px', 
+                            maxHeight: '150px', 
                             overflowY: 'auto',
                             border: '1px solid #f0f0f0',
                             borderRadius: '4px',
-                            padding: '8px'
+                            padding: '8px',
+                            backgroundColor: '#fafafa'
                           }}>
                             {repository.status.changes.map((change, index) => (
                               <div 
@@ -282,6 +283,37 @@ function App() {
                                   </Text>
                                   <Text style={{ fontSize: '13px' }}>{change.file}</Text>
                                 </Space>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* 已追踪文件列表 */}
+                      {repository.trackedFiles.length > 0 && (
+                        <div style={{ marginTop: '12px' }}>
+                          <Text strong style={{ marginBottom: '8px', display: 'block' }}>
+                            仓库文件 ({repository.trackedFiles.length}):
+                          </Text>
+                          <div style={{ 
+                            maxHeight: '200px', 
+                            overflowY: 'auto',
+                            border: '1px solid #e6f7ff',
+                            borderRadius: '4px',
+                            padding: '8px',
+                            backgroundColor: '#f0f9ff'
+                          }}>
+                            {repository.trackedFiles.map((file, index) => (
+                              <div 
+                                key={index}
+                                style={{ 
+                                  padding: '4px 0',
+                                  borderBottom: index < repository.trackedFiles.length - 1 ? '1px solid #e6f7ff' : 'none'
+                                }}
+                              >
+                                <Text style={{ fontSize: '13px', color: '#1890ff' }}>
+                                  📄 {file}
+                                </Text>
                               </div>
                             ))}
                           </div>

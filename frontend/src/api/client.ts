@@ -130,6 +130,15 @@ class ChronosApiClient {
   }
 
   /**
+   * 获取所有已追踪的文件
+   */
+  async getTrackedFiles(
+    repoPath: string
+  ): Promise<ApiResponse<{ files: string[] }>> {
+    return this.get('/repository/files', { path: repoPath })
+  }
+
+  /**
    * 创建快照（提交）
    */
   async createCommit(

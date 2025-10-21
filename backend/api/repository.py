@@ -81,6 +81,30 @@ async def get_status(path: str):
         raise HTTPException(status_code=500, detail=f"未知错误: {str(e)}")
 
 
+@router.get("/files", response_model=ApiResponse)
+async def get_tracked_files(path: str):
+    """
+    获取所有已追踪的文件列表
+
+    返回仓库中所有被Git追踪的文件
+    """
+    try:
+        wrapper = GitWrapper(path)
+        files = wrapper.get_tracked_files()
+
+        return ApiResponse(
+            success=True,
+            message=f"获取到{len(files)}个已追踪文件",
+            data={"files": files, "count": len(files)},
+        )
+    except RepositoryNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except GitError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"未知错误: {str(e)}")
+
+
 @router.post("/commit", response_model=ApiResponse)
 async def create_commit(request: CreateCommitRequest):
     """

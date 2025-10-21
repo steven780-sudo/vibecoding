@@ -4,6 +4,7 @@ import type { StatusData } from '../types/api'
 
 interface UseRepositoryState {
   status: StatusData | null
+  trackedFiles: string[]
   loading: boolean
   error: string | null
 }
@@ -20,6 +21,7 @@ interface UseRepositoryReturn extends UseRepositoryState {
 export function useRepository(): UseRepositoryReturn {
   const [state, setState] = useState<UseRepositoryState>({
     status: null,
+    trackedFiles: [],
     loading: false,
     error: null,
   })
@@ -31,24 +33,31 @@ export function useRepository(): UseRepositoryReturn {
     setState((prev) => ({ ...prev, loading: true, error: null }))
 
     try {
-      const result = await apiClient.getStatus(repoPath)
+      // 并行获取状态和已追踪文件
+      const [statusResult, filesResult] = await Promise.all([
+        apiClient.getStatus(repoPath),
+        apiClient.getTrackedFiles(repoPath),
+      ])
 
-      if (result.success && result.data) {
+      if (statusResult.success && statusResult.data) {
         setState({
-          status: result.data,
+          status: statusResult.data,
+          trackedFiles: filesResult.success ? filesResult.data?.files || [] : [],
           loading: false,
           error: null,
         })
       } else {
         setState({
           status: null,
+          trackedFiles: [],
           loading: false,
-          error: result.error || '获取状态失败',
+          error: statusResult.error || '获取状态失败',
         })
       }
     } catch (error) {
       setState({
         status: null,
+        trackedFiles: [],
         loading: false,
         error: error instanceof Error ? error.message : '未知错误',
       })
@@ -84,6 +93,13 @@ export function useRepository(): UseRepositoryReturn {
       return false
     }
   }, [])
+
+  return {
+    ...state,
+    refreshStatus,
+    initRepository,
+  }
+}
 
   return {
     ...state,

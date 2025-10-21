@@ -230,6 +230,30 @@ class GitWrapper:
             "is_clean": len(changes) == 0,
         }
 
+    def get_tracked_files(self) -> List[str]:
+        """
+        获取所有已追踪的文件列表
+
+        Returns:
+            已追踪文件路径列表
+
+        Raises:
+            RepositoryNotFoundError: 不是Git仓库
+            GitError: 获取文件列表失败
+        """
+        self._verify_repository()
+
+        # 执行git ls-files
+        result = self._run_git_command(["ls-files"])
+
+        # 解析输出
+        files = []
+        for line in result.stdout.strip().split("\n"):
+            if line:
+                files.append(line.strip())
+
+        return files
+
     def get_current_branch(self) -> str:
         """
         获取当前分支名称
