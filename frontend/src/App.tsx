@@ -40,31 +40,47 @@ const { Title, Text } = Typography
 const RECENT_REPOS_KEY = 'chronos_recent_repos'
 
 /**
- * 将文件列表转换为树状结构
+ * 将文件列表转换为树状结构（最多展示4级）
  */
 function buildFileTree(changes: Array<{ status: string; file: string }>): TreeDataNode[] {
+  const MAX_DEPTH = 4
   const tree: { [key: string]: any } = {}
 
   changes.forEach((change) => {
     const parts = change.file.split('/')
     let current = tree
 
-    parts.forEach((part, index) => {
+    // 限制最多4级
+    const displayParts = parts.slice(0, MAX_DEPTH)
+    const hasMore = parts.length > MAX_DEPTH
+
+    displayParts.forEach((part, index) => {
       if (!current[part]) {
         current[part] = {
-          isFile: index === parts.length - 1,
+          isFile: index === displayParts.length - 1 && !hasMore,
           children: {},
           status: change.status,
+          fullPath: parts.slice(0, index + 1).join('/'),
+        }
+      }
+      // 如果是最后一级但还有更多层级，添加省略提示
+      if (index === displayParts.length - 1 && hasMore) {
+        const remainingPath = parts.slice(MAX_DEPTH).join('/')
+        const ellipsisKey = `.../${remainingPath}`
+        current[part].children[ellipsisKey] = {
+          isFile: true,
+          children: {},
+          status: change.status,
+          fullPath: change.file,
         }
       }
       current = current[part].children
     })
   })
 
-  function convertToTreeData(obj: any, path: string = ''): TreeDataNode[] {
+  function convertToTreeData(obj: any, depth: number = 0): TreeDataNode[] {
     return Object.keys(obj).map((key) => {
       const node = obj[key]
-      const fullPath = path ? `${path}/${key}` : key
       const isFile = node.isFile
 
       // 状态标签
@@ -76,10 +92,12 @@ function buildFileTree(changes: Array<{ status: string; file: string }>): TreeDa
         node.status === 'modified' ? '#faad14' :
           node.status === 'deleted' ? '#ff4d4f' : '#999'
 
+      const hasChildren = Object.keys(node.children).length > 0
+
       return {
         title: (
           <Space size={4}>
-            <span>{key}</span>
+            <span style={{ fontSize: '13px' }}>{key}</span>
             {isFile && statusText && (
               <span style={{
                 fontSize: '11px',
@@ -92,11 +110,12 @@ function buildFileTree(changes: Array<{ status: string; file: string }>): TreeDa
             )}
           </Space>
         ),
-        key: fullPath,
-        icon: isFile ? <FileOutlined /> : <FolderOutlined />,
-        children: Object.keys(node.children).length > 0
-          ? convertToTreeData(node.children, fullPath)
+        key: node.fullPath || key,
+        icon: isFile ? <FileOutlined style={{ fontSize: '12px' }} /> : <FolderOutlined style={{ fontSize: '12px' }} />,
+        children: hasChildren && depth < MAX_DEPTH - 1
+          ? convertToTreeData(node.children, depth + 1)
           : undefined,
+        isLeaf: isFile || !hasChildren,
       }
     })
   }
@@ -163,7 +182,7 @@ function getErrorMessage(error: any): string {
 }
 
 /**
- * 获取最近使用的仓库列表
+ * 获取最近使用的项目文件夹列表
  */
 function getRecentRepos(): string[] {
   try {
@@ -585,11 +604,14 @@ function App() {
                       {/* 待提交的变更列表 - 树状结构 */}
                       {repository.status.changes.length > 0 && (
                         <div style={{ marginTop: '12px' }}>
-                          <Text strong style={{ marginBottom: '8px', display: 'block' }}>
-                            待提交的变更:
-                          </Text>
+                          <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Text strong>待提交的变更:</Text>
+                            <Text type="secondary" style={{ fontSize: '11px' }}>
+                              (最多展示4级目录)
+                            </Text>
+                          </div>
                           <div style={{
-                            maxHeight: '200px',
+                            maxHeight: '250px',
                             overflowY: 'auto',
                             border: '1px solid #f0f0f0',
                             borderRadius: '4px',
@@ -598,6 +620,7 @@ function App() {
                           }}>
                             <Tree
                               showIcon
+                              showLine
                               defaultExpandAll
                               treeData={buildFileTree(repository.status.changes)}
                               style={{ background: 'transparent' }}
