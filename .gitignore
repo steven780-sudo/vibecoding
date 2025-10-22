@@ -27,6 +27,10 @@ dist/
 dist-ssr/
 *.local
 
+# Rust/Tauri构建产物（不要提交到Git）
+frontend/src-tauri/target/
+frontend/src-tauri/Cargo.lock
+
 # IDEs
 .vscode/
 .idea/
