@@ -75,14 +75,12 @@ class ChronosApiClient {
         throw new Error(errorMsg)
       }
       
-      console.log(`✅ API请求成功:`, endpoint)
-      return data
-
       // 如果Backend返回success=false，将message放到error字段中
       if (data.success === false && data.message && !data.error) {
         data.error = data.message
       }
 
+      console.log(`✅ API请求成功:`, endpoint)
       return data
     } catch (error) {
       // 如果是网络错误且未达到最大重试次数，则重试
