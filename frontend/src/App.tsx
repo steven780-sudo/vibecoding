@@ -176,6 +176,48 @@ function App() {
     } else {
       console.log('✅ Tauri 环境正常')
     }
+
+    // 检查后端服务器健康状态
+    const checkBackendHealth = async () => {
+      console.log('=== 检查后端服务器 ===')
+      let attempts = 0
+      const maxAttempts = 10
+      const delay = 1000 // 1秒
+
+      while (attempts < maxAttempts) {
+        attempts++
+        console.log(`尝试连接后端 (${attempts}/${maxAttempts})...`)
+        
+        const isHealthy = await apiClient.checkHealth()
+        if (isHealthy) {
+          console.log('✅ 后端服务器已就绪')
+          message.success('应用已就绪', 2)
+          return
+        }
+        
+        if (attempts < maxAttempts) {
+          console.log(`等待 ${delay}ms 后重试...`)
+          await new Promise(resolve => setTimeout(resolve, delay))
+        }
+      }
+      
+      console.error('❌ 后端服务器启动失败')
+      Modal.error({
+        title: '后端服务启动失败',
+        content: (
+          <div>
+            <p>无法连接到后端服务器，请尝试：</p>
+            <ol style={{ paddingLeft: '20px', marginTop: '8px' }}>
+              <li>重启应用</li>
+              <li>检查是否有其他程序占用8765端口</li>
+              <li>查看控制台日志获取详细信息</li>
+            </ol>
+          </div>
+        ),
+      })
+    }
+
+    checkBackendHealth()
   }, [])
 
   // 使用自定义Hooks

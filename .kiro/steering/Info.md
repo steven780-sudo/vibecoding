@@ -22,7 +22,12 @@
 需要版本控制但不熟悉Git的专业人士（文档编写、报告制作、创意工作等）
 
 ### 当前版本
-**v1.1.0** (2025-10-22)
+**v1.2.0** (2025-10-22)
+
+### 版本历史
+- **v1.2.0** (2025-10-22): 文件树展示优化、发布说明组件、增强日志
+- **v1.1.0** (2025-10-22): 系统文件过滤、最近使用列表、Tauri桌面应用
+- **v1.0.0** (2025-10-21): MVP版本，基础功能完成
 
 ---
 
@@ -256,14 +261,26 @@ npm run tauri:build
 
 ### 当前限制
 1. **平台支持**: 仅支持macOS (Apple Silicon)
-2. **文件夹选择**: 需要手动输入路径（待Tauri Dialog API集成）
+2. **Git依赖**: 用户需要自己安装Git（v1.3将内置Git）
 3. **多仓库管理**: 每次只能打开一个仓库
+4. **端口冲突**: 开发模式和应用不能同时运行（都使用8765端口）
+
+### v1.2已知问题
+1. **桌面应用运行问题**: 部分用户报告"资源不存在"错误
+   - 可能原因：后端服务未正确启动
+   - 已添加：详细日志和健康检查
+   - 待修复：确保后端可靠启动
+
+2. **文件夹选择对话框**: 功能已实现但可能失败
+   - 代码已完成，权限已配置
+   - 需要在桌面应用中验证
 
 ### 待优化项
-1. 添加可视化文件夹选择对话框
+1. 实现内置Git（v1.3优先级最高）
 2. 支持Windows和Linux平台
 3. 添加快照搜索功能
 4. 性能监控面板
+5. 解决端口冲突问题（使用动态端口）
 
 ---
 
@@ -359,23 +376,35 @@ cd frontend && npm test
 
 ## 🚀 未来规划
 
-### 短期计划 (v1.2)
-- [ ] 可视化文件夹选择对话框
+### 当前开发 (v1.3) - 进行中
+- [ ] **内置Git功能**（最高优先级）
+  - macOS版本MVP（1-2天）
+  - 开箱即用，无需用户安装Git
+  - 精简后增加约8-10MB体积
+  - 完全遵守GPL v2许可证
+- [ ] 修复桌面应用运行问题
+- [ ] 优化后端启动可靠性
+
+### 短期计划 (v1.4-v1.5)
+- [ ] 内置Git跨平台支持（Windows、Linux）
 - [ ] 快照搜索功能
 - [ ] 分支删除功能
+- [ ] 解决端口冲突（动态端口分配）
 - [ ] 性能监控面板
 
 ### 中期计划 (v2.0)
-- [ ] Windows支持
-- [ ] Linux支持
-- [ ] 多语言支持
-- [ ] 主题切换
+- [ ] Windows完整支持
+- [ ] Linux完整支持
+- [ ] 多语言支持（英文、中文）
+- [ ] 主题切换（亮色/暗色）
+- [ ] 高级Git功能（stash、rebase等）
 
-### 长期规划
-- [ ] 远程仓库同步
-- [ ] 协作功能
+### 长期规划 (v3.0+)
+- [ ] 远程仓库同步（GitHub、GitLab集成）
+- [ ] 协作功能（多人使用同一仓库）
 - [ ] 插件系统
 - [ ] 云备份（可选）
+- [ ] 移动端支持
 
 ---
 
@@ -444,7 +473,7 @@ npm run dev
 - **功能建议**: GitHub Discussions
 
 ### 关键联系人
-- **项目负责人**: sunshunda
+- **项目负责人**: sunshunda@gmail.com
 - **许可证**: MIT License
 
 ---
@@ -466,7 +495,147 @@ npm run dev
 
 ---
 
-**文档版本**: 1.0  
+## 📐 技术栈详情
+
+### 架构
+
+完全在用户本地机器上运行的客户端-服务器架构：
+- **Frontend**: Tauri 2.x + React 18 + TypeScript + Vite
+- **Backend**: Python 3.10+ + FastAPI（打包为独立二进制）
+- **Core Engine**: Git CLI（通过subprocess封装，v1.3将内置）
+- **UI Library**: Ant Design 5.x
+- **Desktop Framework**: Tauri 2.0（Rust）
+
+### 通信机制
+
+Frontend通过本地HTTP API在`127.0.0.1:8765`与Backend通信
+
+**⚠️ 重要**：开发模式和桌面应用不能同时运行（端口冲突）
+
+### 代码质量工具
+
+**Python**:
+- Formatter: Black
+- Linter: Ruff
+- Testing: Pytest
+
+**TypeScript/React**:
+- Formatter: Prettier
+- Linter: ESLint
+- Testing: Vitest
+
+### Git封装策略
+
+所有版本控制操作都通过Python的`subprocess`模块执行Git CLI命令。Backend解析Git输出并返回结构化JSON。
+
+```python
+result = subprocess.run(
+    ["git", "status", "--porcelain"],
+    cwd=repo_path,
+    capture_output=True,
+    text=True
+)
+```
+
+---
+
+## 🎯 产品定位
+
+### 核心价值主张
+
+- 消除混乱的文件命名（"报告_最终版_v3_真正最终版.doc"）
+- 为项目文件夹提供时光穿梭能力
+- 通过分支实现安全的实验
+- 零云依赖 - 所有数据保持本地
+
+### 目标用户
+
+从事复杂文档项目（报告、提案、创意工作）的非技术专业人员，需要版本控制但觉得Git令人生畏。
+
+### 用户友好术语
+
+产品使用简化术语，而不是Git术语：
+- "时光库" (Time Vault) 代替 "repository"
+- "快照" (Snapshot) 代替 "commit"
+- "历史" (History) 代替 "log"
+- "分支" (Branch) - 保持原样，解释为"草稿副本"
+
+---
+
+## 🤖 AI协作规则
+
+### 核心指令
+
+你是资深全栈软件工程师，负责Chronos项目的开发和维护。必须严格遵守项目文档规范和技术约定。
+
+### 核心文档（唯一真相来源）
+
+在开始任何任务前，必须理解以下文档：
+- `.kiro/steering/Info.md` - 项目概述和技术栈
+- `.kiro/steering/HANDOVER.md` - 当前状态和待办事项
+- `.kiro/steering/BUILD_GUIDE.md` - 构建流程
+- `docs/user_given/PRD.md` - 产品需求
+- `docs/user_given/tech_spec.md` - 技术规格
+
+### 工作流程
+
+1. **Git工作流**：
+   - `main`分支是稳定分支
+   - 功能分支：`feature/<feature-name>`
+   - Bug修复：`fix/<issue-name>`
+   - Commit消息：`feat:` `fix:` `docs:` `test:` `refactor:`
+
+2. **交付标准**：
+   - 符合规范的代码（通过Linter和Formatter）
+   - 完备的单元测试
+   - 清晰的Commit历史
+
+3. **沟通准则**：
+   - 主动澄清歧义，不要假设
+   - 专注任务范围，不实现PRD外功能
+   - 为复杂逻辑添加注释
+   - 使用中文交流（代码和专业名词除外）
+
+### 关键约定
+
+- 所有面向用户的字符串使用中文
+- API响应格式：`{success: boolean, data?: any, error?: string}`
+- Git操作隔离在`git_wrapper.py`中
+- 组件文件用PascalCase，工具文件用snake_case（Python）或camelCase（TypeScript）
+
+---
+
+## 🚨 重要提醒
+
+### 端口冲突问题
+
+开发模式和桌面应用都使用8765端口，不能同时运行：
+
+```bash
+# 关闭开发模式后端
+lsof -i :8765  # 查找进程
+kill <PID>     # 杀掉进程
+
+# 或使用脚本
+./scripts/stop-dev.sh
+```
+
+### 桌面应用使用
+
+用户安装dmg后：
+1. 双击Chronos图标
+2. 应用自动启动（包括后端服务）
+3. 开箱即用，无需手动启动服务
+
+### Git存储机制
+
+- 快照存储在`.git`隐藏文件夹中
+- 使用增量存储和压缩
+- 2GB文件夹 + Git ≈ 2.5-3GB（不是4GB）
+
+---
+
+**文档版本**: 2.0  
 **最后更新**: 2025-10-22  
 **维护者**: sunshunda
 

@@ -45,6 +45,8 @@ fn main() {
 fn start_backend_server(app: &tauri::App) -> Option<Child> {
     use tauri::path::BaseDirectory;
     
+    println!("=== 启动后端服务器 ===");
+    
     #[cfg(target_os = "macos")]
     let backend_name = "backend";
 
@@ -54,21 +56,54 @@ fn start_backend_server(app: &tauri::App) -> Option<Child> {
     #[cfg(target_os = "linux")]
     let backend_name = "backend";
 
-    let backend_path = app
+    println!("后端二进制文件名: {}", backend_name);
+
+    // 尝试多种路径解析方式
+    let backend_path = match app
         .path()
         .resolve(format!("binaries/{}", backend_name), BaseDirectory::Resource)
-        .expect("failed to resolve backend binary");
+    {
+        Ok(path) => {
+            println!("✅ 解析Resource路径成功: {:?}", path);
+            path
+        }
+        Err(e) => {
+            eprintln!("❌ 解析Resource路径失败: {}", e);
+            // 尝试使用AppData路径
+            match app
+                .path()
+                .resolve(format!("binaries/{}", backend_name), BaseDirectory::AppData)
+            {
+                Ok(path) => {
+                    println!("✅ 解析AppData路径成功: {:?}", path);
+                    path
+                }
+                Err(e2) => {
+                    eprintln!("❌ 解析AppData路径也失败: {}", e2);
+                    return None;
+                }
+            }
+        }
+    };
 
-    println!("Starting backend server from: {:?}", backend_path);
+    println!("准备启动后端: {:?}", backend_path);
+    
+    // 检查文件是否存在
+    if !backend_path.exists() {
+        eprintln!("❌ 后端二进制文件不存在: {:?}", backend_path);
+        return None;
+    }
+    
+    println!("✅ 后端二进制文件存在");
 
     // Start the backend process
     match Command::new(&backend_path).spawn() {
         Ok(child) => {
-            println!("Backend server started with PID: {}", child.id());
+            println!("✅ 后端服务器启动成功，PID: {}", child.id());
             Some(child)
         }
         Err(e) => {
-            eprintln!("Failed to start backend server: {}", e);
+            eprintln!("❌ 启动后端服务器失败: {}", e);
             None
         }
     }

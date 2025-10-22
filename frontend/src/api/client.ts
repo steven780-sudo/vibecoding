@@ -23,6 +23,25 @@ class ChronosApiClient {
     this.baseUrl = baseUrl
     this.maxRetries = maxRetries
     this.retryDelay = 1000 // 1秒
+    console.log('🔧 API客户端初始化:', this.baseUrl)
+  }
+
+  /**
+   * 检查后端服务器是否可用
+   */
+  async checkHealth(): Promise<boolean> {
+    try {
+      console.log('🏥 检查后端健康状态...')
+      const response = await fetch(`${this.baseUrl.replace('/api', '')}/health`, {
+        method: 'GET',
+      })
+      const isHealthy = response.ok
+      console.log('🏥 后端健康状态:', isHealthy ? '✅ 正常' : '❌ 异常')
+      return isHealthy
+    } catch (error) {
+      console.error('🏥 后端健康检查失败:', error)
+      return false
+    }
   }
 
   /**
@@ -34,8 +53,11 @@ class ChronosApiClient {
     options: RequestInit = {},
     retryCount: number = 0
   ): Promise<ApiResponse<T>> {
+    const fullUrl = `${this.baseUrl}${endpoint}`
+    console.log(`📡 API请求 [尝试 ${retryCount + 1}/${this.maxRetries + 1}]:`, fullUrl)
+    
     try {
-      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      const response = await fetch(fullUrl, {
         ...options,
         headers: {
           'Content-Type': 'application/json',
@@ -43,11 +65,18 @@ class ChronosApiClient {
         },
       })
 
+      console.log(`📡 API响应状态:`, response.status, response.statusText)
+
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || data.message || `HTTP错误: ${response.status}`)
+        const errorMsg = data.error || data.message || `HTTP错误: ${response.status}`
+        console.error(`❌ API错误:`, errorMsg)
+        throw new Error(errorMsg)
       }
+      
+      console.log(`✅ API请求成功:`, endpoint)
+      return data
 
       // 如果Backend返回success=false，将message放到error字段中
       if (data.success === false && data.message && !data.error) {
