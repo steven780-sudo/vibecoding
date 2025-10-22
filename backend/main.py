@@ -20,8 +20,11 @@ app.add_middleware(
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://localhost:1420",  # Tauri default dev port
+        "http://localhost:1421",  # Tauri alternative port
         "tauri://localhost",  # Tauri production
         "https://tauri.localhost",  # Tauri production alternative
+        "http://tauri.localhost",  # Tauri http
+        "*",  # 开发模式允许所有来源
     ],
     allow_credentials=True,
     allow_methods=["*"],

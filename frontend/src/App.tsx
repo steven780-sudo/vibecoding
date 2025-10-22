@@ -180,6 +180,11 @@ function App() {
     // 检查后端服务器健康状态
     const checkBackendHealth = async () => {
       console.log('=== 检查后端服务器 ===')
+
+      // 给后端3秒的初始启动时间
+      console.log('等待后端启动...')
+      await new Promise(resolve => setTimeout(resolve, 3000))
+
       let attempts = 0
       const maxAttempts = 10
       const delay = 1000 // 1秒
@@ -187,20 +192,20 @@ function App() {
       while (attempts < maxAttempts) {
         attempts++
         console.log(`尝试连接后端 (${attempts}/${maxAttempts})...`)
-        
+
         const isHealthy = await apiClient.checkHealth()
         if (isHealthy) {
           console.log('✅ 后端服务器已就绪')
           message.success('应用已就绪', 2)
           return
         }
-        
+
         if (attempts < maxAttempts) {
           console.log(`等待 ${delay}ms 后重试...`)
           await new Promise(resolve => setTimeout(resolve, delay))
         }
       }
-      
+
       console.error('❌ 后端服务器启动失败')
       Modal.error({
         title: '后端服务启动失败',
@@ -322,7 +327,7 @@ function App() {
     try {
       // 先尝试获取状态，验证路径是否有效
       const result = await apiClient.getStatus(path)
-      
+
       if (result.success) {
         setPathInput(path)
         setRepoPath(path)
@@ -602,7 +607,7 @@ function App() {
                               共 {repository.status.changes.length} 个文件
                             </Text>
                           </div>
-                          <FileTreeView 
+                          <FileTreeView
                             changes={repository.status.changes}
                             showCheckbox={false}
                             defaultExpandAll={false}
