@@ -43,3 +43,36 @@ dist-ssr/
 # Logs
 logs/
 *.log
+
+# Rust/Tauri 构建产物（重要！）
+frontend/src-tauri/target/
+frontend/src-tauri/gen/
+
+# 大型二进制文件
+*.dmg
+*.app
+*.exe
+*.msi
+*.deb
+*.rpm
+*.zip
+*.tar.gz
+*.rar
+
+# 临时文件
+*.tmp
+*.temp
+*.bak
+*.swp
+
+# 数据库文件
+*.db
+*.sqlite
+*.sqlite3
+
+# 媒体文件（如果不需要版本控制）
+# *.mp4
+# *.mov
+# *.avi
+# *.mp3
+# *.wav
