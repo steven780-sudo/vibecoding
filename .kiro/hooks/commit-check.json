@@ -1,0 +1,61 @@
+{
+  "name": "commit-check",
+  "description": "提交前运行所有质量检查",
+  "trigger": {
+    "type": "manual",
+    "button": "提交代码"
+  },
+  "actions": [
+    {
+      "type": "command",
+      "name": "TypeScript 类型检查",
+      "command": "npm run type-check",
+      "showOutput": true,
+      "stopOnError": true
+    },
+    {
+      "type": "command",
+      "name": "ESLint 代码检查",
+      "command": "npm run lint",
+      "showOutput": true,
+      "stopOnError": true
+    },
+    {
+      "type": "command",
+      "name": "Prettier 格式检查",
+      "command": "npm run format:check",
+      "showOutput": true,
+      "stopOnError": true
+    },
+    {
+      "type": "command",
+      "name": "运行所有测试",
+      "command": "npm run test",
+      "showOutput": true,
+      "stopOnError": true
+    },
+    {
+      "type": "prompt",
+      "message": "请输入 commit message:",
+      "variable": "commitMessage"
+    },
+    {
+      "type": "command",
+      "name": "提交代码",
+      "command": "git commit -m \"${commitMessage}\"",
+      "showOutput": true
+    },
+    {
+      "type": "confirm",
+      "message": "是否推送到远程？"
+    },
+    {
+      "type": "command",
+      "name": "推送到远程",
+      "command": "git push",
+      "showOutput": true,
+      "condition": "confirmed"
+    }
+  ],
+  "enabled": true
+}

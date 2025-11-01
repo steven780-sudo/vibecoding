@@ -1,0 +1,67 @@
+{
+  "name": "release",
+  "description": "自动化版本发布流程",
+  "trigger": {
+    "type": "manual",
+    "button": "发布新版本"
+  },
+  "actions": [
+    {
+      "type": "prompt",
+      "message": "请输入版本号 (如 1.0.0):",
+      "variable": "version",
+      "validation": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    {
+      "type": "command",
+      "name": "运行完整测试套件",
+      "command": "npm run test",
+      "showOutput": true,
+      "stopOnError": true
+    },
+    {
+      "type": "command",
+      "name": "更新版本号",
+      "command": "npm version ${version} --no-git-tag-version",
+      "showOutput": true,
+      "stopOnError": true
+    },
+    {
+      "type": "command",
+      "name": "生成 CHANGELOG",
+      "command": "npm run changelog",
+      "showOutput": true
+    },
+    {
+      "type": "command",
+      "name": "构建所有版本",
+      "command": "npm run build",
+      "showOutput": true,
+      "stopOnError": true
+    },
+    {
+      "type": "command",
+      "name": "提交版本更新",
+      "command": "git add . && git commit -m \"chore: release v${version}\"",
+      "showOutput": true
+    },
+    {
+      "type": "command",
+      "name": "创建 Git tag",
+      "command": "git tag v${version}",
+      "showOutput": true
+    },
+    {
+      "type": "confirm",
+      "message": "是否推送到远程并发布？"
+    },
+    {
+      "type": "command",
+      "name": "推送代码和标签",
+      "command": "git push && git push --tags",
+      "showOutput": true,
+      "condition": "confirmed"
+    }
+  ],
+  "enabled": true
+}

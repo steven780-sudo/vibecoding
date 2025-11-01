@@ -1,0 +1,75 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Chronos",
+  "version": "1.2.1",
+  "identifier": "com.chronos.app",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:5173",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "plugins": {},
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "resources": [],
+    "externalBin": [
+      "binaries/backend",
+      "binaries/backend-aarch64-apple-darwin"
+    ],
+    "copyright": "",
+    "category": "DeveloperTool",
+    "shortDescription": "本地文件版本管理工具",
+    "longDescription": "Chronos是一款为非技术用户设计的轻量级、本地优先的文件版本管理工具",
+    "macOS": {
+      "frameworks": [],
+      "minimumSystemVersion": "10.13"
+    }
+  },
+  "app": {
+    "windows": [
+      {
+        "fullscreen": false,
+        "resizable": true,
+        "title": "Chronos - 文件时光机",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 800,
+        "minHeight": 600
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; connect-src 'self' http://localhost:* http://127.0.0.1:*; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'",
+      "capabilities": [
+        {
+          "identifier": "main-capability",
+          "description": "Capability for the main window",
+          "windows": [
+            "main"
+          ],
+          "permissions": [
+            "core:default",
+            "core:window:default",
+            "shell:default",
+            "shell:allow-execute",
+            "shell:allow-open",
+            "dialog:default",
+            "dialog:allow-open",
+            "dialog:allow-save",
+            "dialog:allow-message",
+            "dialog:allow-ask",
+            "dialog:allow-confirm"
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "test-on-save",
+  "description": "保存文件时自动运行相关测试",
+  "trigger": {
+    "type": "onSave",
+    "filePattern": "**/*.{ts,tsx}"
+  },
+  "actions": [
+    {
+      "type": "command",
+      "command": "npm run test:related ${file}",
+      "showOutput": true
+    }
+  ],
+  "enabled": true
+}
