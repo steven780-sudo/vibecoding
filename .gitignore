@@ -39,6 +39,14 @@ frontend/src-tauri/Cargo.lock
 *~
 .DS_Store
 
+# Python 工具缓存
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+
+# Kiro 工作流模板（自动生成）
+.spec-workflow/
+
 # Environment
 .env
 .env.local

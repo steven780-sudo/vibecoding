@@ -319,16 +319,36 @@ Closes #123
 
 ### 环境要求
 
-- Node.js 18+
-- npm 9+
-- Git 2.30+
+- **Node.js**: 18.0.0 或更高
+- **npm**: 9.0.0 或更高
+- **操作系统**: macOS, Windows, Linux
+
+### 核心依赖
+
+**生产依赖**:
+- `express` - Web 服务器框架
+- `isomorphic-git` - 内置 Git 实现
+- `better-sqlite3` - SQLite 数据库
+- `chokidar` - 文件监听
+- `react` + `react-dom` - UI 框架
+- `antd` - UI 组件库
+- `zustand` - 状态管理
+- `react-window` - 虚拟滚动
+
+**开发依赖**:
+- `typescript` - 类型系统
+- `vite` - 构建工具
+- `vitest` - 测试框架
+- `eslint` + `prettier` - 代码质量
+- `electron` + `electron-builder` - 桌面应用
 
 ### 快速启动
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/yourusername/chronos-v2.git
-cd chronos-v2
+git clone https://github.com/steven780-sudo/vibecoding.git
+cd vibecoding
+git checkout rewrite
 
 # 2. 安装依赖
 npm install
@@ -637,6 +657,7 @@ npm run test:coverage
 - [需求文档](.kiro/specs/chronos-v2/requirements.md)
 - [设计文档](.kiro/specs/chronos-v2/design.md)
 - [任务清单](.kiro/specs/chronos-v2/tasks.md)
+- [依赖说明](docs/DEPENDENCIES.md)
 - [API 文档](docs/API.md)
 - [用户指南](docs/USER_GUIDE.md)
 
