@@ -141,9 +141,12 @@ Chronos 是一款为非技术用户设计的图形化 Git 版本管理工具，�
 - 中间件生态丰富
 - 简单易用
 
-**Git 实现**: 
-- 本地模式：调用系统 Git CLI（性能最好）
-- 云端模式：isomorphic-git（纯 JS，可在浏览器运行）
+**Git 实现**: **isomorphic-git**（完全内置）
+- 纯 JavaScript 实现，无需用户安装 Git
+- 跨平台支持（Windows + macOS + Linux + 浏览器）
+- 功能完整（init, add, commit, log, branch, merge, checkout）
+- 包体积小（~2MB）
+- 统一技术栈，降低复杂度
 
 **数据库**: SQLite (better-sqlite3)
 - 轻量级嵌入式数据库

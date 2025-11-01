@@ -37,10 +37,10 @@
 │  │  └──────────┘         └──────────────────┘        │ │
 │  │                              │                      │ │
 │  │                              ▼                      │ │
-│  │                        ┌──────────┐                │ │
-│  │                        │ Git CLI  │                │ │
-│  │                        │ SQLite   │                │ │
-│  │                        └──────────┘                │ │
+│  │                        ┌──────────────────┐        │ │
+│  │                        │ isomorphic-git │        │ │
+│  │                        │ SQLite         │        │ │
+│  │                        └──────────────────┘        │ │
 │  └────────────────────────────────────────────────────┘ │
 │                                                          │
 │  ┌────────────────────────────────────────────────────┐ │
@@ -63,10 +63,10 @@
 │  │  │  └──────────┘IPC └────────────────┘ │          │ │
 │  │  │                        │             │          │ │
 │  │  │                        ▼             │          │ │
-│  │  │                  ┌──────────┐        │          │ │
-│  │  │                  │ Git CLI  │        │          │ │
-│  │  │                  │ SQLite   │        │          │ │
-│  │  │                  └──────────┘        │          │ │
+│  │  │                  ┌──────────────────┐  │          │ │
+│  │  │                  │ isomorphic-git │  │          │ │
+│  │  │                  │ SQLite         │  │          │ │
+│  │  │                  └──────────────────┘  │          │ │
 │  │  └──────────────────────────────────────┘          │ │
 │  └────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────┘
@@ -464,105 +464,292 @@ const HistoryViewer: React.FC<HistoryViewerProps> = ({ snapshots, onCheckout, lo
 
 ### GitService (Git 操作服务)
 
+使用 **isomorphic-git** 实现，完全内置，无需用户安装 Git。
+
 ```typescript
+import git from 'isomorphic-git'
+import fs from 'fs'
+import path from 'path'
+
 class GitService {
   /**
    * 初始化仓库
    */
-  async init(path: string): Promise<void> {
-    await exec('git init', { cwd: path })
-    await this.createDefaultGitignore(path)
+  async init(repoPath: string): Promise<void> {
+    await git.init({
+      fs,
+      dir: repoPath,
+      defaultBranch: 'main'
+    })
+    
+    // 创建默认 .gitignore
+    await this.createDefaultGitignore(repoPath)
+    
+    // 配置用户信息
+    await git.setConfig({
+      fs,
+      dir: repoPath,
+      path: 'user.name',
+      value: 'Chronos User'
+    })
+    
+    await git.setConfig({
+      fs,
+      dir: repoPath,
+      path: 'user.email',
+      value: 'user@chronos.local'
+    })
   }
   
   /**
    * 获取仓库状态
    */
-  async getStatus(path: string): Promise<RepositoryStatus> {
-    const output = await exec('git status --porcelain -uall', { cwd: path })
-    return this.parseStatus(output)
+  async getStatus(repoPath: string): Promise<RepositoryStatus> {
+    const status = await git.statusMatrix({
+      fs,
+      dir: repoPath
+    })
+    
+    const changes: FileChange[] = []
+    
+    for (const [filepath, headStatus, workdirStatus, stageStatus] of status) {
+      // 跳过未修改的文件
+      if (headStatus === 1 && workdirStatus === 1 && stageStatus === 1) {
+        continue
+      }
+      
+      let fileStatus: FileStatus
+      if (headStatus === 0) {
+        fileStatus = FileStatus.Added
+      } else if (workdirStatus === 0) {
+        fileStatus = FileStatus.Deleted
+      } else {
+        fileStatus = FileStatus.Modified
+      }
+      
+      changes.push({ path: filepath, status: fileStatus })
+    }
+    
+    const currentBranch = await git.currentBranch({
+      fs,
+      dir: repoPath,
+      fullname: false
+    })
+    
+    return {
+      branch: currentBranch || 'main',
+      changes,
+      isClean: changes.length === 0
+    }
   }
   
   /**
    * 创建快照
    */
   async createCommit(
-    path: string, 
+    repoPath: string, 
     message: string, 
     files?: string[]
   ): Promise<string> {
+    // 添加文件
     if (files && files.length > 0) {
-      await exec(`git add ${files.join(' ')}`, { cwd: path })
+      for (const file of files) {
+        await git.add({ fs, dir: repoPath, filepath: file })
+      }
     } else {
-      await exec('git add .', { cwd: path })
+      // 添加所有变更文件
+      const status = await git.statusMatrix({ fs, dir: repoPath })
+      for (const [filepath] of status) {
+        await git.add({ fs, dir: repoPath, filepath })
+      }
     }
     
-    await exec(`git commit -m "${message}"`, { cwd: path })
-    const commitId = await exec('git rev-parse HEAD', { cwd: path })
-    return commitId.trim()
+    // 创建提交
+    const commitId = await git.commit({
+      fs,
+      dir: repoPath,
+      message,
+      author: {
+        name: 'Chronos User',
+        email: 'user@chronos.local'
+      }
+    })
+    
+    return commitId
   }
   
   /**
    * 获取历史记录
    */
-  async getLog(path: string, limit?: number): Promise<Snapshot[]> {
-    const format = '--pretty=format:%H|%h|%an|%ae|%at|%s|%P'
-    const limitStr = limit ? `-n ${limit}` : ''
-    const output = await exec(`git log ${format} ${limitStr}`, { cwd: path })
-    return this.parseLog(output)
+  async getLog(repoPath: string, limit?: number): Promise<Snapshot[]> {
+    const commits = await git.log({
+      fs,
+      dir: repoPath,
+      depth: limit
+    })
+    
+    return commits.map(commit => ({
+      id: commit.oid,
+      shortId: commit.oid.substring(0, 7),
+      message: commit.commit.message,
+      author: commit.commit.author.name,
+      email: commit.commit.author.email,
+      timestamp: new Date(commit.commit.author.timestamp * 1000),
+      parents: commit.commit.parent,
+      isMerge: commit.commit.parent.length > 1,
+      files: [] // 需要单独获取
+    }))
   }
   
   /**
    * 回滚到指定快照
    */
-  async checkout(path: string, commitId: string): Promise<void> {
-    await exec(`git checkout ${commitId}`, { cwd: path })
+  async checkout(repoPath: string, commitId: string): Promise<void> {
+    await git.checkout({
+      fs,
+      dir: repoPath,
+      ref: commitId,
+      force: true
+    })
   }
   
   /**
    * 获取分支列表
    */
-  async getBranches(path: string): Promise<Branch[]> {
-    const output = await exec('git branch -v', { cwd: path })
-    return this.parseBranches(output)
+  async getBranches(repoPath: string): Promise<Branch[]> {
+    const branches = await git.listBranches({
+      fs,
+      dir: repoPath
+    })
+    
+    const currentBranch = await git.currentBranch({
+      fs,
+      dir: repoPath,
+      fullname: false
+    })
+    
+    return branches.map(name => ({
+      name,
+      isCurrent: name === currentBranch,
+      lastCommit: '', // 需要单独获取
+      lastCommitDate: new Date()
+    }))
   }
   
   /**
    * 创建分支
    */
-  async createBranch(path: string, branchName: string): Promise<void> {
-    await exec(`git branch ${branchName}`, { cwd: path })
-    await exec(`git checkout ${branchName}`, { cwd: path })
+  async createBranch(repoPath: string, branchName: string): Promise<void> {
+    await git.branch({
+      fs,
+      dir: repoPath,
+      ref: branchName
+    })
+    
+    await git.checkout({
+      fs,
+      dir: repoPath,
+      ref: branchName
+    })
   }
   
   /**
    * 切换分支
    */
-  async switchBranch(path: string, branchName: string): Promise<void> {
-    await exec(`git checkout ${branchName}`, { cwd: path })
+  async switchBranch(repoPath: string, branchName: string): Promise<void> {
+    await git.checkout({
+      fs,
+      dir: repoPath,
+      ref: branchName
+    })
   }
   
   /**
    * 合并分支
    */
   async mergeBranch(
-    path: string, 
+    repoPath: string, 
     sourceBranch: string, 
     targetBranch?: string
   ): Promise<MergeResult> {
     if (targetBranch) {
-      await this.switchBranch(path, targetBranch)
+      await this.switchBranch(repoPath, targetBranch)
     }
     
     try {
-      await exec(`git merge ${sourceBranch}`, { cwd: path })
+      await git.merge({
+        fs,
+        dir: repoPath,
+        ours: targetBranch || await git.currentBranch({ fs, dir: repoPath }),
+        theirs: sourceBranch,
+        author: {
+          name: 'Chronos User',
+          email: 'user@chronos.local'
+        }
+      })
+      
       return { hasConflicts: false }
     } catch (error) {
-      const conflicts = await this.getConflicts(path)
+      // 检查是否有冲突
+      const conflicts = await this.getConflicts(repoPath)
       return { hasConflicts: true, conflicts }
     }
   }
+  
+  /**
+   * 创建默认 .gitignore
+   */
+  private async createDefaultGitignore(repoPath: string): Promise<void> {
+    const gitignoreContent = `
+# System Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependencies
+node_modules/
+`.trim()
+    
+    const gitignorePath = path.join(repoPath, '.gitignore')
+    await fs.promises.writeFile(gitignorePath, gitignoreContent, 'utf-8')
+  }
+  
+  /**
+   * 获取冲突文件列表
+   */
+  private async getConflicts(repoPath: string): Promise<string[]> {
+    const status = await git.statusMatrix({ fs, dir: repoPath })
+    const conflicts: string[] = []
+    
+    for (const [filepath, headStatus, workdirStatus, stageStatus] of status) {
+      // 检测冲突状态
+      if (stageStatus === 2) {
+        conflicts.push(filepath)
+      }
+    }
+    
+    return conflicts
+  }
 }
 ```
+
+**优势**：
+- ✅ 完全内置，无需用户安装 Git
+- ✅ 跨平台支持（Windows + macOS + Linux + 浏览器）
+- ✅ 统一的 API，降低复杂度
+- ✅ 性能足够好（对于本地文件操作）
 
 ### FileService (文件操作服务)
 

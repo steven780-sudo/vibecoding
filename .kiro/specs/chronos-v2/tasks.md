@@ -94,25 +94,34 @@
 
 ### 2.1 Git 服务层
 
-- [ ] 2.1.1 实现 GitService 基础功能
-  - 实现 `init()` 方法
+- [ ] 2.1.1 集成 isomorphic-git
+  - 安装 isomorphic-git 依赖
+  - 配置 Node.js fs 适配器
+  - 配置浏览器 LightningFS 适配器（云端模式）
+  - 编写测试验证 Git 操作
+  - _需求: requirements.md 第 2 节_
+
+- [ ] 2.1.2 实现 GitService 基础功能
+  - 实现 `init()` 方法（使用 isomorphic-git）
   - 实现 `getStatus()` 方法
   - 实现 `getFiles()` 方法
+  - 创建默认 .gitignore
   - 编写单元测试
   - _需求: requirements.md 第 3.1 节_
 
-- [ ] 2.1.2 实现快照管理
-  - 实现 `createCommit()` 方法
+- [ ] 2.1.3 实现快照管理
+  - 实现 `createCommit()` 方法（使用 isomorphic-git）
   - 实现 `getLog()` 方法
   - 实现 `checkout()` 方法
   - 编写单元测试
   - _需求: requirements.md 第 3.2 节_
 
-- [ ] 2.1.3 实现分支管理
-  - 实现 `getBranches()` 方法
+- [ ] 2.1.4 实现分支管理
+  - 实现 `getBranches()` 方法（使用 isomorphic-git）
   - 实现 `createBranch()` 方法
   - 实现 `switchBranch()` 方法
   - 实现 `mergeBranch()` 方法
+  - 实现冲突检测
   - 编写单元测试
   - _需求: requirements.md 第 3.3 节_
 
@@ -365,9 +374,10 @@
 ### 5.2 云端 Web 应用
 
 - [ ] 5.2.1 实现云端模式
-  - 集成 isomorphic-git
-  - 实现 File System Access API
+  - 配置 LightningFS（浏览器文件系统）
+  - 实现 File System Access API 集成
   - 实现 IndexedDB 存储
+  - 测试 isomorphic-git 在浏览器中运行
   - _需求: requirements.md 第 1.2 节_
 
 - [ ] 5.2.2 配置 PWA

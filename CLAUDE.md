@@ -100,8 +100,10 @@ v2.0 重写目标：
 - chokidar（文件监听）
 
 **Git 实现**:
-- 本地模式：系统 Git CLI
-- 云端模式：isomorphic-git
+- **isomorphic-git**（完全内置）
+- 纯 JavaScript 实现，无需用户安装 Git
+- 跨平台支持（Windows + macOS + Linux + 浏览器）
+- 功能完整，性能足够
 
 **桌面应用**:
 - Electron
