@@ -1,0 +1,52 @@
+{
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+       "args": ["-y", "@upstash/context7-mcp", "--api-key", "ctx7sk-d4305efc-9b48-4f19-8f76-9e4e264975b2"],
+       "env": {},
+      "disabled": false,
+      "autoApprove": ["search_documentation", "get_documentation"],
+      "description": "Context7 MCP - 搜索最新的开发文档和 API 参考"
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@executeautomation/playwright-mcp-server"],
+      "env": {},
+      "disabled": false,
+      "autoApprove": ["get_browser_state", "get_console_logs"],
+      "description": "Playwright MCP - 用于 Web 应用的自动化测试和浏览器操作"
+    },
+    "chrome-devtools": {
+      "command": "npx",
+      "args": ["-y", "chrome-devtools-mcp@latest"],
+      "env": {},
+      "disabled": false,
+      "autoApprove": ["get_console_logs", "get_network_logs", "get_page_info"],
+      "description": "Chrome DevTools MCP - Chrome 官方浏览器调试和测试工具"
+    },
+    "memory": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"],
+      "env": {},
+      "disabled": false,
+      "autoApprove": ["create_entities", "create_relations", "search_nodes"],
+      "description": "Memory MCP - 基于知识图谱的持久化记忆系统"
+    },
+    "sequential-thinking": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
+      "env": {},
+      "disabled": false,
+      "autoApprove": [],
+      "description": "Sequential Thinking MCP - 通过思维序列进行动态和反思性问题解决"
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."],
+      "env": {},
+      "disabled": false,
+      "autoApprove": ["read_file", "list_directory"],
+      "description": "文件系统 MCP - 增强的文件操作能力"
+    }
+  }
+}

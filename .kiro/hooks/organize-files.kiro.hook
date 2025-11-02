@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Organize Files",
+  "description": "Automatically organize folder structure and update file path references in documents when new files are created",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "**/*"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A new file has been created. Please perform the following checks and actions:\n\n1. **Check File Location**: Verify if the new file is in the correct directory according to these rules:\n   - Source code files → src/\n   - Test files → tests/\n   - Documentation files → docs/\n   - Configuration files → config/\n   - Script files → scripts/\n   - Database files → database/\n   - Root directory should only contain: package.json, .gitignore, LICENSE, README.md, CLAUDE.md\n\n2. **Check for Duplicate Documents**: If the new file is in docs/, check if there are existing documents with similar or overlapping content.\n\n3. **Merge Duplicate Content**: If duplicate content is found, merge it into the existing document instead of keeping separate files. Maintain clear structure and avoid content duplication.\n\n4. **Update Document Index**: Update CLAUDE.md and any other relevant documents to reflect the correct file paths and references.\n\n5. **Suggest File Move**: If the file is in the wrong location, suggest moving it to the appropriate directory.\n\nPlease analyze the newly created file and provide recommendations or take actions to maintain proper project organization."
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "enabled": true,
+  "name": "提交前质量检查",
+  "description": "在提交代码前自动运行 TypeScript 类型检查、ESLint、Prettier 格式检查和所有测试，确保代码质量",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "package.json",
+      ".git/HEAD"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "运行提交前质量检查流程：\n1. 执行 TypeScript 类型检查 (npm run type-check)\n2. 执行 ESLint 代码检查 (npm run lint)\n3. 执行 Prettier 格式检查 (npm run format:check)\n4. 运行所有测试 (npm run test)\n5. 如果所有检查通过，提示用户准备提交代码\n6. 显示检查结果摘要\n\n如果任何检查失败，停止流程并显示错误信息。"
+  }
+}

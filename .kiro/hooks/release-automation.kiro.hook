@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Release Automation",
+  "description": "Automates the complete release process: runs tests, updates version, generates changelog, builds project, commits changes, creates git tags, and pushes to remote",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "package.json"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "When package.json is modified, guide the user through the release process:\n1. Prompt for version number (format: X.Y.Z)\n2. Run full test suite: npm run test\n3. Update version: npm version ${version} --no-git-tag-version\n4. Generate changelog: npm run changelog\n5. Build all versions: npm run build\n6. Commit changes: git add . && git commit -m \"chore: release v${version}\"\n7. Create git tag: git tag v${version}\n8. Ask for confirmation to push\n9. If confirmed, push code and tags: git push && git push --tags\n\nStop on any errors during testing or building. Show output for all commands."
+  }
+}
