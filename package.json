@@ -3,16 +3,21 @@
   "version": "2.0.0",
   "description": "Chronos - 本地文件时光机 v2.0",
   "private": true,
-  "type": "module",
+  "main": "dist-electron/main.js",
   "scripts": {
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
-    "dev:server": "tsx watch src/server/index.ts",
+    "dev:server": "nodemon --exec ts-node -r tsconfig-paths/register --project config/tsconfig.server.json src/server/index.ts",
     "dev:client": "vite --config config/vite.config.ts",
+    "dev:electron": "concurrently \"npm run dev:server\" \"npm run dev:client\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\"",
     "build": "npm run build:server && npm run build:client",
-    "build:server": "tsc -p config/tsconfig.server.json",
+    "build:server": "tsc -p config/tsconfig.server.json && cp -r dist/server dist-server",
     "build:client": "tsc -p config/tsconfig.json && vite build --config config/vite.config.ts",
-    "build:electron": "npm run build && electron-builder --config config/electron-builder.yml",
+    "build:electron": "npm run build && tsc -p config/tsconfig.electron.json && electron-builder",
+    "build:electron:mac": "npm run build:electron -- --mac",
+    "build:electron:win": "npm run build:electron -- --win",
+    "build:electron:linux": "npm run build:electron -- --linux",
     "start": "node dist/server/index.js",
+    "start:electron": "electron .",
     "test": "vitest run --config config/vitest.config.ts",
     "test:watch": "vitest --config config/vitest.config.ts",
     "test:coverage": "vitest run --coverage --config config/vitest.config.ts",
@@ -28,50 +33,57 @@
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5",
-    "isomorphic-git": "^1.25.0",
+    "antd": "^5.12.0",
     "better-sqlite3": "^9.2.2",
     "chokidar": "^3.5.3",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "isomorphic-git": "^1.25.0",
     "lru-cache": "^10.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-window": "^1.8.10",
-    "antd": "^5.12.0",
-    "zustand": "^4.4.7",
-    "zod": "^3.22.4"
+    "zod": "^3.22.4",
+    "zustand": "^4.4.7"
   },
   "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "@types/better-sqlite3": "^7.6.8",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jsdom": "^27.0.0",
     "@types/node": "^20.10.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "@types/react-window": "^1.8.8",
-    "@types/express": "^4.17.21",
-    "@types/cors": "^2.8.17",
-    "@types/better-sqlite3": "^7.6.8",
+    "@types/supertest": "^6.0.2",
     "@typescript-eslint/eslint-plugin": "^6.15.0",
     "@typescript-eslint/parser": "^6.15.0",
     "@vitejs/plugin-react": "^4.2.1",
     "@vitest/coverage-v8": "^1.0.4",
-    "@playwright/test": "^1.40.0",
-    "typescript": "^5.3.3",
-    "vite": "^5.0.8",
-    "vitest": "^1.0.4",
+    "concurrently": "^8.2.2",
+    "conventional-changelog-cli": "^4.1.0",
+    "cross-env": "^10.1.0",
+    "electron": "^28.3.3",
+    "electron-builder": "^24.13.3",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
-    "prettier": "^3.1.1",
-    "tsx": "^4.7.0",
-    "concurrently": "^8.2.2",
-    "rimraf": "^5.0.5",
-    "electron": "^28.0.0",
-    "electron-builder": "^24.9.1",
     "husky": "^8.0.3",
+    "jsdom": "^27.1.0",
     "lint-staged": "^15.2.0",
-    "conventional-changelog-cli": "^4.1.0",
+    "nodemon": "^3.1.10",
+    "prettier": "^3.1.1",
+    "rimraf": "^5.0.5",
     "supertest": "^6.3.3",
-    "@types/supertest": "^6.0.2"
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.8",
+    "vitest": "^1.0.4",
+    "wait-on": "^7.2.0"
   },
   "engines": {
     "node": ">=18.0.0",
@@ -94,5 +106,42 @@
   "bugs": {
     "url": "https://github.com/steven780-sudo/vibecoding/issues"
   },
-  "homepage": "https://github.com/steven780-sudo/vibecoding#readme"
+  "homepage": "https://github.com/steven780-sudo/vibecoding#readme",
+  "build": {
+    "productName": "Chronos v2",
+    "appId": "com.chronos.v2",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-server/**/*",
+      "dist-electron/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "icon": "build/icon.icns"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "build/icon.ico"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb",
+        "rpm"
+      ],
+      "category": "Development",
+      "icon": "build/icon.png"
+    }
+  }
 }

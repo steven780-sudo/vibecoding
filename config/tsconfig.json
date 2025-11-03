@@ -38,7 +38,7 @@
     "noUncheckedIndexedAccess": true,
     
     /* 路径别名 */
-    "baseUrl": ".",
+    "baseUrl": "..",
     "paths": {
       "@/*": ["src/*"],
       "@/server/*": ["src/server/*"],
@@ -50,7 +50,7 @@
     "skipLibCheck": true
   },
   "include": [
-    "src/**/*"
+    "../src/**/*"
   ],
   "exclude": [
     "node_modules",
